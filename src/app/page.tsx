@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-950 text-white">
@@ -9,6 +11,12 @@ export default function Home() {
         Manage your HR operations and AI agent workforce from a single unified
         platform.
       </p>
+      <Link
+        href="/login"
+        className="mt-8 inline-flex items-center rounded-md bg-white px-6 py-3 text-sm font-semibold text-gray-950 transition hover:bg-gray-200"
+      >
+        Sign In
+      </Link>
     </div>
   );
 }
