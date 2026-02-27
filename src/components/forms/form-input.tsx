@@ -1,9 +1,9 @@
 import { forwardRef } from 'react';
 import { UseFormRegisterReturn } from 'react-hook-form';
-import { Input, InputProps } from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import { FormField } from './form-field';
 
-export interface FormInputProps extends Omit<InputProps, 'name'> {
+export interface FormInputProps extends Omit<React.ComponentProps<'input'>, 'name'> {
   label?: string;
   error?: string;
   description?: string;

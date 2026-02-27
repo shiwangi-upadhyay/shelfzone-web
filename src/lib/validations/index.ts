@@ -122,5 +122,5 @@ export const createEnumSchema = <T extends string>(
   fieldName: string
 ) =>
   z.enum(values, {
-    errorMap: () => ({ message: `Invalid ${fieldName}` }),
+    message: `Invalid ${fieldName}`,
   });

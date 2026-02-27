@@ -1,9 +1,9 @@
 import { forwardRef } from 'react';
 import { UseFormRegisterReturn } from 'react-hook-form';
-import { Textarea, TextareaProps } from '@/components/ui/textarea';
+import { Textarea } from '@/components/ui/textarea';
 import { FormField } from './form-field';
 
-export interface FormTextareaProps extends Omit<TextareaProps, 'name'> {
+export interface FormTextareaProps extends Omit<React.ComponentProps<'textarea'>, 'name'> {
   label?: string;
   error?: string;
   description?: string;
