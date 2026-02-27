@@ -49,7 +49,10 @@ export function useEmployees(filters?: EmployeeFilters) {
   return useQuery({
     queryKey: ['employees', filters],
     queryFn: async () => {
-      const response = await api.get('/employees', { params: filters });
+      const queryString = filters
+        ? `?${new URLSearchParams(filters as any).toString()}`
+        : '';
+      const response = await api.get<any>(`/employees${queryString}`);
       return response.data;
     },
   });
@@ -60,7 +63,7 @@ export function useEmployee(id: string) {
     queryKey: ['employees', id],
     queryFn: async () => {
       const response = await api.get<Employee>(`/employees/${id}`);
-      return response.data;
+      return response;
     },
     enabled: !!id,
   });
@@ -71,7 +74,7 @@ export function useCreateEmployee() {
 
   return useMutation({
     mutationFn: async (data: Partial<Employee>) => {
-      const response = await api.post('/employees', data);
+      const response = await api.post<any>('/employees', data);
       return response.data;
     },
     onSuccess: () => {
@@ -79,7 +82,7 @@ export function useCreateEmployee() {
       toast.success('Employee created successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to create employee');
+      toast.error(error.message || 'Failed to create employee');
     },
   });
 }
@@ -89,7 +92,7 @@ export function useUpdateEmployee(id: string) {
 
   return useMutation({
     mutationFn: async (data: Partial<Employee>) => {
-      const response = await api.put(`/employees/${id}`, data);
+      const response = await api.put<any>(`/employees/${id}`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -98,7 +101,7 @@ export function useUpdateEmployee(id: string) {
       toast.success('Employee updated successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update employee');
+      toast.error(error.message || 'Failed to update employee');
     },
   });
 }
@@ -115,7 +118,7 @@ export function useDeleteEmployee() {
       toast.success('Employee deleted successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to delete employee');
+      toast.error(error.message || 'Failed to delete employee');
     },
   });
 }

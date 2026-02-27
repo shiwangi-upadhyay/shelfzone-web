@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth-store';
-import { api, ApiError } from '@/lib/api';
+import api, { ApiError } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 interface User {
@@ -32,7 +32,7 @@ export function useAuth() {
   } = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
-      const response = await api<{ user: User }>('/api/auth/me');
+      const response = await api.get<{ user: User }>('/api/auth/me');
       return response.user;
     },
     enabled: isAuthenticated,

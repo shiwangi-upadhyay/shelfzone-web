@@ -42,7 +42,7 @@ export default function ApplyLeavePage() {
   });
 
   const selectedLeaveType = form.watch('leaveType');
-  const selectedBalance = balanceData?.find((b) => b.leaveType === selectedLeaveType);
+  const selectedBalance = balanceData?.find((b: any) => b.leaveType === selectedLeaveType);
 
   const handleSubmit = (data: ApplyLeaveFormData) => {
     applyLeave(data, {
@@ -52,7 +52,7 @@ export default function ApplyLeavePage() {
     });
   };
 
-  const leaveTypeOptions = balanceData?.map((balance) => ({
+  const leaveTypeOptions = balanceData?.map((balance: any) => ({
     value: balance.leaveType,
     label: `${balance.leaveType.replace('_', ' ')} (${balance.remainingDays} days left)`,
   })) || [];

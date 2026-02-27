@@ -111,14 +111,14 @@ export function EmployeeForm({ employee, onSubmit, loading }: EmployeeFormProps)
           <div className="grid gap-4 md:grid-cols-2">
             <FormDatePicker
               label="Date of Joining"
-              value={form.watch('dateOfJoining')}
-              onChange={(date) => form.setValue('dateOfJoining', date || '')}
+              value={form.watch('dateOfJoining') ? new Date(form.watch('dateOfJoining')!) : undefined}
+              onChange={(date) => form.setValue('dateOfJoining', date?.toISOString() || '')}
               required
             />
             <FormDatePicker
               label="Date of Birth"
-              value={form.watch('dateOfBirth')}
-              onChange={(date) => form.setValue('dateOfBirth', date || '')}
+              value={form.watch('dateOfBirth') ? new Date(form.watch('dateOfBirth')!) : undefined}
+              onChange={(date) => form.setValue('dateOfBirth', date?.toISOString() || '')}
             />
           </div>
 

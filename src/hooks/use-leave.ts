@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import api from '@/lib/api';
 import { toast } from 'sonner';
 
 export interface LeaveRequest {
@@ -36,8 +36,8 @@ export function useLeaveRequests() {
   return useQuery({
     queryKey: ['leave-requests'],
     queryFn: async () => {
-      const response = await api.get('/me/leaves');
-      return response.data;
+      const response = await api.get<any>('/me/leaves');
+      return response;
     },
   });
 }
@@ -47,7 +47,7 @@ export function useLeaveBalance() {
     queryKey: ['leave-balance'],
     queryFn: async () => {
       const response = await api.get<LeaveBalance[]>('/leave-admin/balance');
-      return response.data;
+      return response;
     },
   });
 }
@@ -63,7 +63,7 @@ export function useApplyLeave() {
       isHalfDay: boolean;
       reason: string;
     }) => {
-      const response = await api.post('/leave/apply', data);
+      const response = await api.post<any>('/leave/apply', data);
       return response.data;
     },
     onSuccess: () => {
@@ -73,7 +73,7 @@ export function useApplyLeave() {
       toast.success('Leave request submitted successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to submit leave request');
+      toast.error(error.message || 'Failed to submit leave request');
     },
   });
 }
@@ -83,7 +83,7 @@ export function useCancelLeave() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.put(`/leave/${id}/cancel`);
+      const response = await api.put<any>(`/leave/${id}/cancel`);
       return response.data;
     },
     onSuccess: () => {
@@ -92,7 +92,7 @@ export function useCancelLeave() {
       toast.success('Leave request cancelled');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to cancel leave request');
+      toast.error(error.message || 'Failed to cancel leave request');
     },
   });
 }
@@ -107,7 +107,7 @@ export function useReviewLeave() {
       reviewComments?: string;
     }) => {
       const { id, ...body } = data;
-      const response = await api.put(`/leave/${id}/review`, body);
+      const response = await api.put<any>(`/leave/${id}/review`, body);
       return response.data;
     },
     onSuccess: () => {
@@ -116,7 +116,7 @@ export function useReviewLeave() {
       toast.success('Leave request reviewed');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to review leave request');
+      toast.error(error.message || 'Failed to review leave request');
     },
   });
 }
@@ -125,10 +125,8 @@ export function usePendingApprovals() {
   return useQuery({
     queryKey: ['pending-approvals'],
     queryFn: async () => {
-      const response = await api.get('/leave', {
-        params: { status: 'pending' },
-      });
-      return response.data;
+      const response = await api.get<any>('/leave?status=pending');
+      return response;
     },
   });
 }

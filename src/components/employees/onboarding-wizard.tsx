@@ -127,8 +127,8 @@ export function OnboardingWizard({ onSubmit, loading }: OnboardingWizardProps) {
               />
               <FormDatePicker
                 label="Date of Birth"
-                value={step1Form.watch('dateOfBirth')}
-                onChange={(date) => step1Form.setValue('dateOfBirth', date || '')}
+                value={step1Form.watch('dateOfBirth') ? new Date(step1Form.watch('dateOfBirth')!) : undefined}
+                onChange={(date) => step1Form.setValue('dateOfBirth', date?.toISOString() || '')}
               />
               <div className="flex justify-end">
                 <Button type="submit">
@@ -173,8 +173,8 @@ export function OnboardingWizard({ onSubmit, loading }: OnboardingWizardProps) {
               />
               <FormDatePicker
                 label="Date of Joining"
-                value={step2Form.watch('dateOfJoining')}
-                onChange={(date) => step2Form.setValue('dateOfJoining', date || '')}
+                value={step2Form.watch('dateOfJoining') ? new Date(step2Form.watch('dateOfJoining')!) : undefined}
+                onChange={(date) => step2Form.setValue('dateOfJoining', date?.toISOString() || '')}
                 required
               />
               <FormSelect

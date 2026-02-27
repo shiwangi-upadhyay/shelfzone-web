@@ -52,15 +52,11 @@ export default function RegisterPage() {
   const onSubmit = async (values: RegisterValues) => {
     setIsLoading(true);
     try {
-      await api('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: values.email,
-          password: values.password,
-          firstName: values.firstName,
-          lastName: values.lastName,
-        }),
-        skipAuth: true,
+      await api.post('/api/auth/register', {
+        email: values.email,
+        password: values.password,
+        firstName: values.firstName,
+        lastName: values.lastName,
       });
 
       toast.success('Account created successfully! Please sign in.');

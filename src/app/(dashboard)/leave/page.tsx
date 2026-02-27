@@ -44,7 +44,7 @@ export default function LeavePage() {
         <div>
           <h2 className="text-lg font-semibold mb-3">Leave Balance</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {leaveBalances.map((balance) => (
+            {leaveBalances.map((balance: any) => (
               <LeaveBalanceCard key={balance.leaveType} balance={balance} />
             ))}
           </div>

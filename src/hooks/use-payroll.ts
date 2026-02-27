@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import api from '@/lib/api';
 
 export interface SalaryComponent {
   name: string;
@@ -43,8 +43,8 @@ export function usePayslips() {
   return useQuery({
     queryKey: ['payslips'],
     queryFn: async () => {
-      const response = await api.get('/me/payslips');
-      return response.data;
+      const response = await api.get<any>('/me/payslips');
+      return response;
     },
   });
 }
@@ -54,7 +54,7 @@ export function usePayslip(id: string) {
     queryKey: ['payslips', id],
     queryFn: async () => {
       const response = await api.get<Payslip>(`/payroll/payslips/${id}`);
-      return response.data;
+      return response;
     },
     enabled: !!id,
   });
@@ -68,7 +68,7 @@ export function useSalaryStructure(employeeId?: string) {
         ? `/payroll/salary-structure/${employeeId}`
         : '/me/salary-structure';
       const response = await api.get<SalaryStructure>(url);
-      return response.data;
+      return response;
     },
     enabled: !!employeeId || true,
   });

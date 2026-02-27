@@ -30,7 +30,10 @@ export function useAttendance(params?: { month?: number; year?: number }) {
   return useQuery({
     queryKey: ['attendance', params],
     queryFn: async () => {
-      const response = await api.get('/me/attendance', { params });
+      const queryString = params
+        ? `?${new URLSearchParams(params as any).toString()}`
+        : '';
+      const response = await api.get<any>(`/me/attendance${queryString}`);
       return response.data;
     },
   });
@@ -41,9 +44,7 @@ export function useTodayAttendance() {
     queryKey: ['attendance', 'today'],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0];
-      const response = await api.get('/me/attendance', {
-        params: { date: today },
-      });
+      const response = await api.get<any>(`/me/attendance?date=${today}`);
       return response.data?.[0] || null;
     },
     refetchInterval: 1000 * 60, // Refetch every minute
@@ -55,7 +56,7 @@ export function useCheckIn() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await api.post('/attendance/check-in');
+      const response = await api.post<any>('/attendance/check-in');
       return response.data;
     },
     onSuccess: () => {
@@ -64,7 +65,7 @@ export function useCheckIn() {
       toast.success('Checked in successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to check in');
+      toast.error(error.message || 'Failed to check in');
     },
   });
 }
@@ -74,7 +75,7 @@ export function useCheckOut() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await api.post('/attendance/check-out');
+      const response = await api.post<any>('/attendance/check-out');
       return response.data;
     },
     onSuccess: () => {
@@ -83,7 +84,7 @@ export function useCheckOut() {
       toast.success('Checked out successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to check out');
+      toast.error(error.message || 'Failed to check out');
     },
   });
 }
@@ -93,7 +94,7 @@ export function useRegularizeAttendance() {
 
   return useMutation({
     mutationFn: async (data: { date: string; remarks: string }) => {
-      const response = await api.post('/attendance/regularize', data);
+      const response = await api.post<any>('/attendance/regularize', data);
       return response.data;
     },
     onSuccess: () => {
@@ -101,7 +102,7 @@ export function useRegularizeAttendance() {
       toast.success('Attendance regularization request submitted');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to submit request');
+      toast.error(error.message || 'Failed to submit request');
     },
   });
 }

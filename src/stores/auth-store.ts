@@ -42,15 +42,11 @@ export const useAuthStore = create<AuthState>()(
       
       login: async (email: string, password: string) => {
         try {
-          const response = await api<{
+          const response = await api.post<{
             user: User;
             accessToken: string;
             refreshToken: string;
-          }>('/api/auth/login', {
-            method: 'POST',
-            body: JSON.stringify({ email, password }),
-            skipAuth: true,
-          });
+          }>('/api/auth/login', { email, password });
 
           set({
             user: response.user,
@@ -69,9 +65,7 @@ export const useAuthStore = create<AuthState>()(
         
         try {
           if (accessToken) {
-            await api('/api/auth/logout', {
-              method: 'POST',
-            });
+            await api.post('/api/auth/logout', {});
           }
         } catch (error) {
           // Continue with logout even if API call fails
@@ -89,14 +83,10 @@ export const useAuthStore = create<AuthState>()(
         }
 
         try {
-          const response = await api<{
+          const response = await api.post<{
             accessToken: string;
             refreshToken: string;
-          }>('/api/auth/refresh', {
-            method: 'POST',
-            body: JSON.stringify({ refreshToken }),
-            skipAuth: true,
-          });
+          }>('/api/auth/refresh', { refreshToken });
 
           set({
             accessToken: response.accessToken,

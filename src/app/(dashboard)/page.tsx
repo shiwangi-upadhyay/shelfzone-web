@@ -51,7 +51,7 @@ export default function DashboardPage() {
       : 'Not checked in today';
 
   const leaveBalance = dashboard?.leaves.available 
-    ? Object.values(dashboard.leaves.available).reduce((sum, val) => sum + val, 0)
+    ? (Object.values(dashboard.leaves.available) as number[]).reduce((sum, val) => sum + val, 0)
     : 0;
 
   const payrollStatus = dashboard?.payroll.currentMonth.status || 'pending';

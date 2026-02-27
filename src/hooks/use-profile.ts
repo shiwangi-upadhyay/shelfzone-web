@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import api from '@/lib/api';
 import { toast } from 'sonner';
 
 export interface UserProfile {
@@ -37,7 +37,7 @@ export function useProfile() {
     queryKey: ['profile'],
     queryFn: async () => {
       const response = await api.get<UserProfile>('/me/profile');
-      return response.data;
+      return response;
     },
   });
 }
@@ -47,7 +47,7 @@ export function useUpdateProfile() {
 
   return useMutation({
     mutationFn: async (data: { phone: string }) => {
-      const response = await api.put('/me/profile', data);
+      const response = await api.put<any>('/me/profile', data);
       return response.data;
     },
     onSuccess: () => {
@@ -55,7 +55,7 @@ export function useUpdateProfile() {
       toast.success('Profile updated successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update profile');
+      toast.error(error.message || 'Failed to update profile');
     },
   });
 }

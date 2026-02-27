@@ -101,7 +101,7 @@ async function refreshAccessToken(): Promise<string> {
   return newAccessToken;
 }
 
-export async function api<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
+export async function apiRequest<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
   const { skipAuth, headers: customHeaders, ...rest } = options;
 
   const headers: HeadersInit = {
@@ -165,3 +165,33 @@ export async function api<T>(endpoint: string, options: ApiOptions = {}): Promis
 
   return response.json();
 }
+
+// Helper methods
+export const api = {
+  get: async <T = any>(endpoint: string, options?: ApiOptions): Promise<T> => {
+    return apiRequest<T>(endpoint, { ...options, method: 'GET' });
+  },
+  
+  post: async <T = any>(endpoint: string, data?: any, options?: ApiOptions): Promise<T> => {
+    return apiRequest<T>(endpoint, {
+      ...options,
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  },
+  
+  put: async <T = any>(endpoint: string, data?: any, options?: ApiOptions): Promise<T> => {
+    return apiRequest<T>(endpoint, {
+      ...options,
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  },
+  
+  delete: async <T = any>(endpoint: string, options?: ApiOptions): Promise<T> => {
+    return apiRequest<T>(endpoint, { ...options, method: 'DELETE' });
+  },
+};
+
+// Also export as default for convenience
+export default api;
