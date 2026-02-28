@@ -8,20 +8,39 @@ interface TraceFiltersProps {
   onSearchChange: (v: string) => void;
   status: string;
   onStatusChange: (v: string) => void;
+  departments?: string[];
+  department?: string;
+  onDepartmentChange?: (v: string) => void;
 }
 
-export function TraceFilters({ search, onSearchChange, status, onStatusChange }: TraceFiltersProps) {
+export function TraceFilters({
+  search, onSearchChange, status, onStatusChange,
+  departments, department, onDepartmentChange,
+}: TraceFiltersProps) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2">
       <Input
-        placeholder="Search traces..."
+        placeholder="Search by name or email…"
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
-        className="w-64"
+        className="w-56 h-8 text-xs bg-background"
       />
+      {departments && departments.length > 0 && onDepartmentChange && (
+        <Select value={department || 'all'} onValueChange={onDepartmentChange}>
+          <SelectTrigger className="w-40 h-8 text-xs">
+            <SelectValue placeholder="Department" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All departments</SelectItem>
+            {departments.map(d => (
+              <SelectItem key={d} value={d}>{d}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
       <Select value={status} onValueChange={onStatusChange}>
-        <SelectTrigger className="w-40">
-          <SelectValue placeholder="All statuses" />
+        <SelectTrigger className="w-32 h-8 text-xs">
+          <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All statuses</SelectItem>
