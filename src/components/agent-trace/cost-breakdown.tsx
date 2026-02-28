@@ -84,7 +84,7 @@ export function CostBreakdown({ stats, breakdown, isLoading }: CostBreakdownProp
               />
               <YAxis fontSize={12} tickFormatter={(value) => `$${value.toFixed(2)}`} />
               <Tooltip 
-                formatter={(value: number) => [`$${value.toFixed(4)}`, 'Cost']}
+                formatter={(value: number | undefined) => [`$${(value ?? 0).toFixed(4)}`, 'Cost']}
                 labelFormatter={(label) => new Date(label).toLocaleDateString()}
               />
               <Bar dataKey="cost" fill="hsl(var(--primary))" />

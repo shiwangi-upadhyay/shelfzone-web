@@ -6,7 +6,7 @@ export function useLiveTrace(traceId: string) {
   const [events, setEvents] = useState<SessionEvent[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const token = useAuthStore((state) => state.token);
+  const token = useAuthStore((state) => state.accessToken);
 
   useEffect(() => {
     if (!traceId || !token) return;
