@@ -37,6 +37,8 @@ export function AgentMap() {
   };
 
   // Group employees by department
+  console.log('[AgentMap] employees:', employees, 'type:', typeof employees, 'isArray:', Array.isArray(employees), 'length:', employees?.length);
+  console.log('[AgentMap] traces:', traces, 'type:', typeof traces, 'isArray:', Array.isArray(traces), 'length:', traces?.length);
   const departments = new Map<string, OrgEmployee[]>();
   (employees || []).forEach(emp => {
     const dept = emp.department?.name || 'Unassigned';
