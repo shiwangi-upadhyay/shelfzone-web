@@ -22,6 +22,7 @@ import {
   Terminal,
   TrendingUp,
   Search,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -111,6 +112,11 @@ const agentNavigation = [
     name: 'Agent Trace',
     href: '/dashboard/agent-trace',
     icon: Search,
+  },
+  {
+    name: 'Command Center',
+    href: '/dashboard/agents/command',
+    icon: Zap,
   },
   {
     name: 'Commands',
