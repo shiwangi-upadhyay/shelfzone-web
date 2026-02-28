@@ -44,7 +44,7 @@ export function AgentBadge({
       <span className="text-xs">{statusDots[status]}</span>
       {cost !== undefined && (
         <span className="text-xs text-muted-foreground ml-1">
-          ${cost.toFixed(4)}
+          ${Number(cost).toFixed(4)}
         </span>
       )}
     </Badge>

@@ -43,7 +43,7 @@ export function CostBreakdown({ stats, breakdown, isLoading }: CostBreakdownProp
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">${stats.costToday.toFixed(4)}</p>
+            <p className="text-2xl font-bold">${Number(stats.costToday).toFixed(4)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -53,7 +53,7 @@ export function CostBreakdown({ stats, breakdown, isLoading }: CostBreakdownProp
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">${stats.costThisWeek.toFixed(4)}</p>
+            <p className="text-2xl font-bold">${Number(stats.costThisWeek).toFixed(4)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -63,7 +63,7 @@ export function CostBreakdown({ stats, breakdown, isLoading }: CostBreakdownProp
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">${stats.costThisMonth.toFixed(4)}</p>
+            <p className="text-2xl font-bold">${Number(stats.costThisMonth).toFixed(4)}</p>
           </CardContent>
         </Card>
       </div>
@@ -106,15 +106,15 @@ export function CostBreakdown({ stats, breakdown, isLoading }: CostBreakdownProp
             </div>
             <div>
               <p className="text-muted-foreground">Avg Cost/Session</p>
-              <p className="text-lg font-semibold">${stats.avgCost.toFixed(4)}</p>
+              <p className="text-lg font-semibold">${Number(stats.avgCost).toFixed(4)}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Tokens In</p>
-              <p className="text-lg font-semibold">{stats.tokensIn.toLocaleString()}</p>
+              <p className="text-lg font-semibold">{Number(stats.tokensIn).toLocaleString()}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Tokens Out</p>
-              <p className="text-lg font-semibold">{stats.tokensOut.toLocaleString()}</p>
+              <p className="text-lg font-semibold">{Number(stats.tokensOut).toLocaleString()}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Error Rate</p>
@@ -146,7 +146,7 @@ export function CostBreakdown({ stats, breakdown, isLoading }: CostBreakdownProp
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold">${op.cost.toFixed(4)}</p>
+                    <p className="text-sm font-bold">${Number(op.cost).toFixed(4)}</p>
                   </div>
                 </div>
               ))}

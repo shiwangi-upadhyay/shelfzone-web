@@ -43,7 +43,7 @@ export const FlowNode = memo(({ data }: NodeProps) => {
             {data.cost !== undefined && (
               <div>
                 <span className="text-muted-foreground">Cost: </span>
-                <span className="font-medium">${data.cost.toFixed(4)}</span>
+                <span className="font-medium">${Number(data.cost).toFixed(4)}</span>
               </div>
             )}
             {data.duration !== undefined && (

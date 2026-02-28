@@ -27,7 +27,7 @@ export function ThinkingEvent({ content, timestamp, cost }: ThinkingEventProps) 
             <div className="flex items-center gap-2">
               {cost !== undefined && (
                 <span className="text-xs text-muted-foreground">
-                  ${cost.toFixed(6)}
+                  ${Number(cost).toFixed(6)}
                 </span>
               )}
               <span className="text-xs text-muted-foreground">

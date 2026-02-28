@@ -100,7 +100,7 @@ export default function TraceDetailPage() {
               )}
               {trace.totalCost !== undefined && (
                 <span className="text-muted-foreground">
-                  Total Cost: ${trace.totalCost.toFixed(4)}
+                  Total Cost: ${Number(trace.totalCost).toFixed(4)}
                 </span>
               )}
               {trace.agentCount !== undefined && (
@@ -169,7 +169,7 @@ export default function TraceDetailPage() {
           <div>
             <p className="text-muted-foreground mb-1">Total Cost</p>
             <p className="text-lg font-semibold">
-              {trace.totalCost !== undefined ? `$${trace.totalCost.toFixed(4)}` : 'N/A'}
+              {trace.totalCost !== undefined ? `$${Number(trace.totalCost).toFixed(4)}` : 'N/A'}
             </p>
           </div>
           <div>

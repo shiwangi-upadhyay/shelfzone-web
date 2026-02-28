@@ -105,7 +105,7 @@ export function RawLogViewer({ events }: RawLogViewerProps) {
                       )}
                       {event.cost !== undefined && (
                         <span className="text-muted-foreground">
-                          ${event.cost.toFixed(6)}
+                          ${Number(event.cost).toFixed(6)}
                         </span>
                       )}
                     </div>

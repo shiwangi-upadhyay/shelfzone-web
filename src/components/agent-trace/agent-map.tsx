@@ -143,7 +143,7 @@ export function AgentMap() {
                         <span>{trace.duration}s</span>
                       )}
                       {trace.totalCost !== undefined && (
-                        <span>${trace.totalCost.toFixed(4)}</span>
+                        <span>${Number(trace.totalCost).toFixed(4)}</span>
                       )}
                       {trace.agentCount !== undefined && (
                         <span>{trace.agentCount} agents</span>
