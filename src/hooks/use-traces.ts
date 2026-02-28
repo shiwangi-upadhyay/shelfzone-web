@@ -33,8 +33,16 @@ export function useTraces(filters: TraceFilters = {}) {
         if (value !== undefined && value !== null && value !== '') params.set(key, String(value));
       });
       const qs = params.toString();
-      const res = await api.get(`/api/traces${qs ? `?${qs}` : ''}`);
-      return res.data as Trace[];
+      const url = `/api/traces${qs ? `?${qs}` : ''}`;
+      console.log('[useTraces] fetching:', url);
+      try {
+        const res = await api.get(url);
+        console.log('[useTraces] response:', JSON.stringify(res).slice(0, 300));
+        return res.data as Trace[];
+      } catch (err: any) {
+        console.error('[useTraces] ERROR:', err.message, err);
+        throw err;
+      }
     },
   });
 }

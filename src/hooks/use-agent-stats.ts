@@ -39,8 +39,15 @@ export function useOrgAgentOverview() {
   return useQuery({
     queryKey: ['org-agent-overview'],
     queryFn: async () => {
-      const res = await api.get('/api/org-tree/agent-overview');
-      return res.data as OrgEmployee[];
+      console.log('[useOrgAgentOverview] fetching...');
+      try {
+        const res = await api.get('/api/org-tree/agent-overview');
+        console.log('[useOrgAgentOverview] response:', JSON.stringify(res).slice(0, 300));
+        return res.data as OrgEmployee[];
+      } catch (err: any) {
+        console.error('[useOrgAgentOverview] ERROR:', err.message, err);
+        throw err;
+      }
     },
   });
 }
