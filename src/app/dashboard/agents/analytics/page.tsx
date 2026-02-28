@@ -44,7 +44,7 @@ interface PlatformAnalytics {
 export default function AnalyticsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['agent-analytics'],
-    queryFn: () => api.get<PlatformAnalytics>('/api/agent-portal/analytics/platform'),
+    queryFn: () => api.get<any>('/api/agent-portal/analytics/platform'),
   });
 
   if (isLoading) {
@@ -164,7 +164,7 @@ export default function AnalyticsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {analytics.topAgents.map((agent, i) => (
+                {analytics.topAgents.map((agent: any, i: number) => (
                   <TableRow key={agent.id}>
                     <TableCell>
                       <Badge variant={i < 3 ? 'default' : 'outline'}>{i + 1}</Badge>

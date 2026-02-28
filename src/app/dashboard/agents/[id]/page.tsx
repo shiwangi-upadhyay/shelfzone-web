@@ -95,22 +95,22 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
   const { data: agentData, isLoading } = useQuery({
     queryKey: ['agent', id],
-    queryFn: () => api.get<{ agent: AgentDetail }>(`/api/agent-portal/agents/${id}/detail`),
+    queryFn: () => api.get<any>(`/api/agent-portal/agents/${id}/detail`),
   });
 
   const { data: sessionsData } = useQuery({
     queryKey: ['agent-sessions', id],
-    queryFn: () => api.get<{ sessions: Session[] }>(`/api/agent-portal/sessions?agentId=${id}`),
+    queryFn: () => api.get<any>(`/api/agent-portal/sessions?agentId=${id}`),
   });
 
   const { data: keysData } = useQuery({
     queryKey: ['agent-keys', id],
-    queryFn: () => api.get<{ apiKeys: ApiKey[] }>(`/api/agent-portal/agents/${id}/api-keys`),
+    queryFn: () => api.get<any>(`/api/agent-portal/agents/${id}/api-keys`),
   });
 
   const { data: configData } = useQuery({
     queryKey: ['agent-config', id],
-    queryFn: () => api.get<{ logs: ConfigLog[] }>(`/api/agent-portal/config/${id}/history`),
+    queryFn: () => api.get<any>(`/api/agent-portal/config/${id}/history`),
   });
 
   const healthCheckMutation = useMutation({
@@ -140,10 +140,10 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const agent = agentData?.agent;
-  const sessions = sessionsData?.sessions || [];
-  const apiKeys = keysData?.apiKeys || [];
-  const configLogs = configData?.logs || [];
+  const agent = agentData?.data as AgentDetail | undefined;
+  const sessions = (sessionsData?.data || []) as Session[];
+  const apiKeys = (keysData?.data || []) as ApiKey[];
+  const configLogs = (configData?.data || []) as ConfigLog[];
 
   if (isLoading) {
     return (

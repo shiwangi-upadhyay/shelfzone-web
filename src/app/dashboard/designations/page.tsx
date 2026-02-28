@@ -46,7 +46,7 @@ export default function DesignationsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['designations'],
-    queryFn: () => api.get<{ designations: Designation[] }>('/api/designations'),
+    queryFn: () => api.get<any>('/api/designations'),
   });
 
   const createMutation = useMutation({
@@ -97,7 +97,7 @@ export default function DesignationsPage() {
     }
   };
 
-  const designations = data?.designations || [];
+  const designations = data?.data || [];
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
@@ -163,7 +163,7 @@ export default function DesignationsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {designations.map((d) => (
+                {designations.map((d: any) => (
                   <TableRow key={d.id}>
                     <TableCell className="font-medium">{d.title}</TableCell>
                     <TableCell>

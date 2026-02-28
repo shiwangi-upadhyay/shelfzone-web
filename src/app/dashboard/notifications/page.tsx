@@ -36,7 +36,7 @@ export default function NotificationsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['notifications'],
-    queryFn: () => api.get<{ notifications: Notification[] }>('/api/notifications'),
+    queryFn: () => api.get<any>('/api/notifications'),
   });
 
   const { data: unreadData } = useQuery({
@@ -60,7 +60,7 @@ export default function NotificationsPage() {
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const notifications = data?.notifications || [];
+  const notifications = data?.data || [];
   const unreadCount = unreadData?.count || 0;
 
   const formatType = (type: string) =>
@@ -110,7 +110,7 @@ export default function NotificationsPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {notifications.map((n) => (
+              {notifications.map((n: any) => (
                 <div
                   key={n.id}
                   className={`flex items-start gap-3 rounded-lg border p-4 transition-colors ${
