@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface ViewToggleProps {
   view: 'org' | 'agent';
@@ -9,23 +9,21 @@ interface ViewToggleProps {
 
 export function ViewToggle({ view, onChange }: ViewToggleProps) {
   return (
-    <div className="inline-flex rounded-lg border border-border bg-muted p-1">
-      <Button
-        variant={view === 'org' ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => onChange('org')}
-        className="text-xs"
-      >
-        👥 Org View
-      </Button>
-      <Button
-        variant={view === 'agent' ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => onChange('agent')}
-        className="text-xs"
-      >
-        🤖 Agent View
-      </Button>
+    <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5">
+      {(['org', 'agent'] as const).map((v) => (
+        <button
+          key={v}
+          onClick={() => onChange(v)}
+          className={cn(
+            'px-3.5 py-1.5 text-xs font-medium rounded-md transition-all',
+            view === v
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          {v === 'org' ? 'Org View' : 'Agent View'}
+        </button>
+      ))}
     </div>
   );
 }
