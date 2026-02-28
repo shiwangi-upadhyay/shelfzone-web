@@ -49,7 +49,11 @@ export const FlowNode = memo(({ data }: NodeProps) => {
             {data.duration !== undefined && (
               <div>
                 <span className="text-muted-foreground">Time: </span>
-                <span className="font-medium">{data.duration}s</span>
+                <span className="font-medium">
+                  {data.duration > 60000
+                    ? `${Math.floor(data.duration / 60000)}m${Math.floor((data.duration % 60000) / 1000)}s`
+                    : `${Math.floor(data.duration / 1000)}s`}
+                </span>
               </div>
             )}
           </div>

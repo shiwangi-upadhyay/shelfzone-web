@@ -93,19 +93,19 @@ export default function TraceDetailPage() {
               >
                 {trace.status}
               </Badge>
-              {trace.duration !== undefined && (
+              {trace.startedAt && trace.completedAt && (
                 <span className="text-muted-foreground">
-                  Duration: {trace.duration}s
+                  Duration: {Math.round((new Date(trace.completedAt).getTime() - new Date(trace.startedAt).getTime()) / 60000)}min
                 </span>
               )}
               {trace.totalCost !== undefined && (
                 <span className="text-muted-foreground">
-                  Total Cost: ${Number(trace.totalCost).toFixed(4)}
+                  Total Cost: ${Number(trace.totalCost).toFixed(2)}
                 </span>
               )}
-              {trace.agentCount !== undefined && (
+              {trace.agentsUsed !== undefined && (
                 <span className="text-muted-foreground">
-                  Agents: {trace.agentCount}
+                  Agents: {trace.agentsUsed}
                 </span>
               )}
             </div>
@@ -163,19 +163,21 @@ export default function TraceDetailPage() {
           <div>
             <p className="text-muted-foreground mb-1">Total Duration</p>
             <p className="text-lg font-semibold">
-              {trace.duration !== undefined ? `${trace.duration}s` : 'N/A'}
+              {trace.startedAt && trace.completedAt
+                ? `${Math.round((new Date(trace.completedAt).getTime() - new Date(trace.startedAt).getTime()) / 60000)}min`
+                : 'N/A'}
             </p>
           </div>
           <div>
             <p className="text-muted-foreground mb-1">Total Cost</p>
             <p className="text-lg font-semibold">
-              {trace.totalCost !== undefined ? `$${Number(trace.totalCost).toFixed(4)}` : 'N/A'}
+              {trace.totalCost !== undefined ? `$${Number(trace.totalCost).toFixed(2)}` : 'N/A'}
             </p>
           </div>
           <div>
             <p className="text-muted-foreground mb-1">Agents Used</p>
             <p className="text-lg font-semibold">
-              {trace.agentCount !== undefined ? trace.agentCount : 'N/A'}
+              {trace.agentsUsed ?? trace.agentCount ?? 'N/A'}
             </p>
           </div>
         </div>

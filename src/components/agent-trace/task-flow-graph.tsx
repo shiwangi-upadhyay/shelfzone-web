@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -37,8 +37,21 @@ export function TaskFlowGraph({
   onNodeClick,
   isLoading,
 }: TaskFlowGraphProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+
+  // Update when props change
+  useEffect(() => {
+    if (initialNodes.length > 0) {
+      setNodes(initialNodes);
+    }
+  }, [initialNodes, setNodes]);
+
+  useEffect(() => {
+    if (initialEdges.length > 0) {
+      setEdges(initialEdges);
+    }
+  }, [initialEdges, setEdges]);
 
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -51,7 +64,7 @@ export function TaskFlowGraph({
     return <Skeleton className="w-full h-[500px]" />;
   }
 
-  if (nodes.length === 0) {
+  if (nodes.length === 0 && initialNodes.length === 0) {
     return (
       <div className="flex items-center justify-center h-[500px] border rounded-lg bg-muted/10">
         <p className="text-muted-foreground">No flow data available</p>
