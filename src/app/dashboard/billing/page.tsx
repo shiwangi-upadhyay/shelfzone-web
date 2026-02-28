@@ -487,7 +487,7 @@ export default function BillingPage() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <DailySpendChart data={summary?.dailySpend} />
+        <DailySpendChart data={summary?.costByDay} />
         <CostByAgentChart data={byAgent} />
       </div>
 
