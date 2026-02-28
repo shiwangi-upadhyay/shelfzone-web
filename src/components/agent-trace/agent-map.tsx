@@ -37,8 +37,6 @@ export function AgentMap() {
   };
 
   // Group employees by department
-  console.log('[AgentMap] employees:', employees, 'type:', typeof employees, 'isArray:', Array.isArray(employees), 'length:', employees?.length);
-  console.log('[AgentMap] traces:', traces, 'type:', typeof traces, 'isArray:', Array.isArray(traces), 'length:', traces?.length);
   const departments = new Map<string, OrgEmployee[]>();
   (employees || []).forEach(emp => {
     const dept = emp.department?.name || 'Unassigned';
@@ -55,7 +53,7 @@ export function AgentMap() {
           <div className="py-2">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold">{emp.name}</span>
-              <span className="text-xs text-muted-foreground">${Number(emp.totalCost).toFixed(2)} total</span>
+              <span className="text-xs text-muted-foreground font-mono">${Number(emp.totalCost).toFixed(2)} total</span>
             </div>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
               {emp.agents.map(agent => (
@@ -114,9 +112,6 @@ export function AgentMap() {
             <div className="text-center py-12 text-muted-foreground">
               <span className="text-3xl block mb-2">👥</span>
               <p className="text-sm">No employees found</p>
-              <p className="text-xs mt-2 text-red-400">
-                DEBUG: empLoading={String(empLoading)}, empError={empError?.message || 'none'}, employees={employees ? `array(${employees.length})` : String(employees)}
-              </p>
             </div>
           )}
         </div>
@@ -159,9 +154,6 @@ export function AgentMap() {
           <div className="text-center py-8 text-muted-foreground">
             <span className="text-2xl block mb-1">📋</span>
             <p className="text-sm">No traces found</p>
-              <p className="text-xs mt-2 text-red-400">
-                DEBUG: tracesLoading={String(tracesLoading)}, tracesError={tracesError?.message || 'none'}, traces={traces ? `array(${traces.length})` : String(traces)}
-              </p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -182,8 +174,8 @@ export function AgentMap() {
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                       <span>🤖 {trace.masterAgent?.name}</span>
-                      {duration !== null && <span>⏱ {Math.floor(duration / 60)}m{duration % 60}s</span>}
-                      <span>💰 ${Number(trace.totalCost).toFixed(2)}</span>
+                      {duration !== null && <span className="font-mono">⏱ {Math.floor(duration / 60)}m{duration % 60}s</span>}
+                      <span className="font-mono">💰 ${Number(trace.totalCost).toFixed(2)}</span>
                       <span>👥 {trace.agentsUsed} agents</span>
                     </div>
                   </div>

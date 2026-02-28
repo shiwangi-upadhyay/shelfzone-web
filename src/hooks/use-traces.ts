@@ -34,15 +34,8 @@ export function useTraces(filters: TraceFilters = {}) {
       });
       const qs = params.toString();
       const url = `/api/traces${qs ? `?${qs}` : ''}`;
-      console.log('[useTraces] fetching:', url);
-      try {
-        const res = await api.get(url);
-        console.log('[useTraces] response:', JSON.stringify(res).slice(0, 300));
-        return res.data as Trace[];
-      } catch (err: any) {
-        console.error('[useTraces] ERROR:', err.message, err);
-        throw err;
-      }
+      const res = await api.get(url);
+      return res.data as Trace[];
     },
   });
 }

@@ -26,7 +26,7 @@ function FlowAgentNode({ data }: NodeProps<FlowNodeData>) {
       <div className="text-xl mb-1">{data.emoji}</div>
       <div className="font-semibold text-sm">{data.name}</div>
       {!data.isOwner && (
-        <div className="flex items-center justify-center gap-2 mt-1 text-xs text-muted-foreground">
+        <div className="flex items-center justify-center gap-2 mt-1 text-xs text-muted-foreground font-mono">
           <span>${Number(data.cost).toFixed(2)}</span>
           {data.duration && <span>• {data.duration}</span>}
         </div>
