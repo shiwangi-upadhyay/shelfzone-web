@@ -63,11 +63,11 @@ export interface TraceStatus {
 export function useInstruct(masterAgentId: string | null) {
   return useMutation({
     mutationFn: async (instruction: string) => {
-      const res = await api.post<{ traceId: string; sessionId: string }>(
+      const res = await api.post<{ data: { traceId: string; sessionId: string } }>(
         '/api/agent-gateway/instruct',
-        { agentId: masterAgentId, instruction }
+        { masterAgentId, instruction }
       );
-      return res;
+      return res.data;
     },
   });
 }
@@ -92,7 +92,16 @@ export function useTraceStream(traceId: string | null) {
     if (!traceId) return;
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    const es = new EventSource(`${apiUrl}/api/agent-gateway/stream/${traceId}`);
+    // EventSource can't send Authorization header, so pass token as query param
+    let token = '';
+    try {
+      const stored = localStorage.getItem('shelfzone-auth');
+      if (stored) {
+        const { state } = JSON.parse(stored);
+        token = state?.accessToken || '';
+      }
+    } catch {}
+    const es = new EventSource(`${apiUrl}/api/agent-gateway/stream/${traceId}?token=${token}`);
     esRef.current = es;
 
     es.onmessage = (e) => {
