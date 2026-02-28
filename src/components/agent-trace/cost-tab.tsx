@@ -2,7 +2,8 @@
 
 import { useAgentStats } from '@/hooks/use-agent-stats';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { cn } from '@/lib/utils';
 
 export function CostTab({ agentId }: { agentId: string | null }) {
   const { data: stats, isLoading } = useAgentStats(agentId);
@@ -10,8 +11,8 @@ export function CostTab({ agentId }: { agentId: string | null }) {
   if (isLoading) {
     return (
       <div className="space-y-4 p-4">
-        <div className="grid grid-cols-3 gap-3">
-          {Array.from({ length: 3 }).map((_, i) => (
+        <div className="grid grid-cols-2 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-20 rounded-lg" />
           ))}
         </div>
@@ -25,25 +26,55 @@ export function CostTab({ agentId }: { agentId: string | null }) {
   }
 
   const last7 = (stats.costByDay || []).slice(-7);
+  const errorPct = (Number(stats.errorRate) * 100).toFixed(1);
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="grid grid-cols-4 gap-3">
-        <StatCard label="Total Sessions" value={String(stats.totalSessions)} />
-        <StatCard label="Avg Cost" value={`$${Number(stats.avgCost).toFixed(2)}`} />
+    <div className="space-y-4 p-4 overflow-y-auto max-h-[calc(100vh-280px)]">
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 gap-2.5">
+        <StatCard label="Total Cost" value={`$${Number(stats.avgCost * stats.totalSessions).toFixed(2)}`} accent />
         <StatCard label="Total Tokens" value={stats.totalTokens.toLocaleString()} />
-        <StatCard label="Error Rate" value={`${(Number(stats.errorRate) * 100).toFixed(1)}%`} />
+        <StatCard label="Sessions" value={String(stats.totalSessions)} />
+        <StatCard
+          label="Error Rate"
+          value={`${errorPct}%`}
+          warn={Number(errorPct) > 5}
+        />
       </div>
 
+      {/* Chart */}
       {last7.length > 0 && (
-        <div className="rounded-xl border border-border bg-card p-4">
-          <h4 className="text-sm font-semibold mb-3">Cost by Day (Last 7 Days)</h4>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={last7}>
-              <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `$${v}`} />
-              <Tooltip formatter={(v) => `$${Number(v).toFixed(4)}`} />
-              <Bar dataKey="cost" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+        <div className="rounded-lg border border-border/60 bg-card p-4">
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Cost — Last 7 Days
+          </h4>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={last7} barSize={24}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" vertical={false} />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v: string) => v.slice(5)}
+              />
+              <YAxis
+                tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v: number) => `$${v}`}
+                width={40}
+              />
+              <Tooltip
+                formatter={(v: number | undefined) => [`$${Number(v ?? 0).toFixed(4)}`, 'Cost']}
+                contentStyle={{
+                  fontSize: 11,
+                  borderRadius: 8,
+                  border: '1px solid hsl(var(--border))',
+                  background: 'hsl(var(--card))',
+                }}
+              />
+              <Bar dataKey="cost" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -52,11 +83,17 @@ export function CostTab({ agentId }: { agentId: string | null }) {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value, accent, warn }: { label: string; value: string; accent?: boolean; warn?: boolean }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-3 shadow-sm">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-lg font-semibold font-mono">{value}</p>
+    <div className="rounded-lg border border-border/60 bg-card p-3">
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{label}</p>
+      <p className={cn(
+        'text-lg font-semibold font-mono tabular-nums',
+        warn && 'text-red-600 dark:text-red-400',
+        accent && 'text-foreground',
+      )}>
+        {value}
+      </p>
     </div>
   );
 }
