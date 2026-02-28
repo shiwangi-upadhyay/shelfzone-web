@@ -51,7 +51,7 @@ export const useAuthStore = create<AuthState>()(
           set({
             user: response.user,
             accessToken: response.accessToken,
-            refreshToken: response.refreshToken,
+            refreshToken: response.refreshToken || null,
             isAuthenticated: true,
           });
         } catch (error) {

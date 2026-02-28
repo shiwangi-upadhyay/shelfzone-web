@@ -49,9 +49,15 @@ export function useEmployees(filters?: EmployeeFilters) {
   return useQuery({
     queryKey: ['employees', filters],
     queryFn: async () => {
-      const queryString = filters
-        ? `?${new URLSearchParams(filters as any).toString()}`
-        : '';
+      const params = new URLSearchParams();
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            params.set(key, String(value));
+          }
+        });
+      }
+      const queryString = params.toString() ? `?${params.toString()}` : '';
       const response = await api.get<any>(`/api/employees${queryString}`);
       return response;
     },

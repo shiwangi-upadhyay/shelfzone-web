@@ -16,15 +16,19 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  // Auth guard - redirect to login if not authenticated
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+
+  // Auth guard - redirect to login if not authenticated or token missing
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !accessToken) {
+      clearAuth(); // Clean up stale persisted state
       router.push('/login?redirect=' + encodeURIComponent(pathname));
     }
-  }, [isAuthenticated, router, pathname]);
+  }, [isAuthenticated, accessToken, router, pathname, clearAuth]);
 
   // Don't render content until auth check is complete
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !accessToken) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
