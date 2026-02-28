@@ -124,6 +124,11 @@ const agentNavigation = [
     href: '/dashboard/agents/commands',
     icon: Terminal,
   },
+  {
+    name: 'Billing',
+    href: '/dashboard/billing',
+    icon: DollarSign,
+  },
 ];
 
 const settingsNavigation = [
