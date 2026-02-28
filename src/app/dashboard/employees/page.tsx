@@ -31,7 +31,7 @@ export default function EmployeesPage() {
     designationId: designationFilter || undefined,
     status: statusFilter || undefined,
     page,
-    limit: 10,
+    limit: 50,
   });
 
   const { mutate: deleteEmployee } = useDeleteEmployee();
