@@ -63,11 +63,17 @@ export interface TraceStatus {
 export function useInstruct(masterAgentId: string | null) {
   return useMutation({
     mutationFn: async (instruction: string) => {
-      const res = await api.post<{ data: { traceId: string; sessionId: string } }>(
-        '/api/agent-gateway/instruct',
-        { masterAgentId, instruction }
-      );
-      return res.data;
+      console.log('[useInstruct] calling POST /api/agent-gateway/instruct', { masterAgentId, instruction });
+      try {
+        const res = await api.post('/api/agent-gateway/instruct', { masterAgentId, instruction });
+        console.log('[useInstruct] raw response:', res);
+        const data = (res as any).data ?? res;
+        console.log('[useInstruct] extracted data:', data);
+        return data as { traceId: string; sessionId: string };
+      } catch (err) {
+        console.error('[useInstruct] CAUGHT ERROR:', err);
+        throw err;
+      }
     },
   });
 }
