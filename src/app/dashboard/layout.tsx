@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { Sidebar } from '@/components/layout/sidebar';
@@ -14,21 +14,33 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const [hydrated, setHydrated] = useState(false);
 
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const accessToken = useAuthStore((state) => state.accessToken);
   const clearAuth = useAuthStore((state) => state.clearAuth);
 
-  // Auth guard - redirect to login if not authenticated or token missing
+  // Wait for Zustand to hydrate from localStorage
   useEffect(() => {
+    // Zustand persist hydrates synchronously on first render in the browser,
+    // but the component mounts with default state first. Use a microtask to
+    // let hydration complete before checking auth.
+    const timer = setTimeout(() => setHydrated(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Auth guard — only runs AFTER hydration
+  useEffect(() => {
+    if (!hydrated) return;
+
     if (!isAuthenticated || !accessToken) {
-      clearAuth(); // Clean up stale persisted state
+      clearAuth();
       router.push('/login?redirect=' + encodeURIComponent(pathname));
     }
-  }, [isAuthenticated, accessToken, router, pathname, clearAuth]);
+  }, [hydrated, isAuthenticated, accessToken, router, pathname, clearAuth]);
 
-  // Don't render content until auth check is complete
-  if (!isAuthenticated || !accessToken) {
+  // Show loading spinner while hydrating or if not authenticated
+  if (!hydrated || !isAuthenticated || !accessToken) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
