@@ -36,7 +36,7 @@ export function useProfile() {
   return useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
-      const response = await api.get<UserProfile>('/me/profile');
+      const response = await api.get<UserProfile>('/api/me/profile');
       return response;
     },
   });
@@ -47,7 +47,7 @@ export function useUpdateProfile() {
 
   return useMutation({
     mutationFn: async (data: { phone: string }) => {
-      const response = await api.put<any>('/me/profile', data);
+      const response = await api.put<any>('/api/me/profile', data);
       return response.data;
     },
     onSuccess: () => {

@@ -33,7 +33,7 @@ export function useAttendance(params?: { month?: number; year?: number }) {
       const queryString = params
         ? `?${new URLSearchParams(params as any).toString()}`
         : '';
-      const response = await api.get<any>(`/me/attendance${queryString}`);
+      const response = await api.get<any>(`/api/me/attendance${queryString}`);
       return response.data;
     },
   });
@@ -44,7 +44,7 @@ export function useTodayAttendance() {
     queryKey: ['attendance', 'today'],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0];
-      const response = await api.get<any>(`/me/attendance?date=${today}`);
+      const response = await api.get<any>(`/api/me/attendance?date=${today}`);
       return response.data?.[0] || null;
     },
     refetchInterval: 1000 * 60, // Refetch every minute
@@ -56,7 +56,7 @@ export function useCheckIn() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await api.post<any>('/attendance/check-in');
+      const response = await api.post<any>('/api/attendance/check-in');
       return response.data;
     },
     onSuccess: () => {
@@ -75,7 +75,7 @@ export function useCheckOut() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await api.post<any>('/attendance/check-out');
+      const response = await api.post<any>('/api/attendance/check-out');
       return response.data;
     },
     onSuccess: () => {
@@ -94,7 +94,7 @@ export function useRegularizeAttendance() {
 
   return useMutation({
     mutationFn: async (data: { date: string; remarks: string }) => {
-      const response = await api.post<any>('/attendance/regularize', data);
+      const response = await api.post<any>('/api/attendance/regularize', data);
       return response.data;
     },
     onSuccess: () => {

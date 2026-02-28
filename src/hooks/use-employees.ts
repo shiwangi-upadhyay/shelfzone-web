@@ -52,7 +52,7 @@ export function useEmployees(filters?: EmployeeFilters) {
       const queryString = filters
         ? `?${new URLSearchParams(filters as any).toString()}`
         : '';
-      const response = await api.get<any>(`/employees${queryString}`);
+      const response = await api.get<any>(`/api/employees${queryString}`);
       return response.data;
     },
   });
@@ -62,7 +62,7 @@ export function useEmployee(id: string) {
   return useQuery({
     queryKey: ['employees', id],
     queryFn: async () => {
-      const response = await api.get<Employee>(`/employees/${id}`);
+      const response = await api.get<Employee>(`/api/employees/${id}`);
       return response;
     },
     enabled: !!id,
@@ -74,7 +74,7 @@ export function useCreateEmployee() {
 
   return useMutation({
     mutationFn: async (data: Partial<Employee>) => {
-      const response = await api.post<any>('/employees', data);
+      const response = await api.post<any>('/api/employees', data);
       return response.data;
     },
     onSuccess: () => {
@@ -92,7 +92,7 @@ export function useUpdateEmployee(id: string) {
 
   return useMutation({
     mutationFn: async (data: Partial<Employee>) => {
-      const response = await api.put<any>(`/employees/${id}`, data);
+      const response = await api.put<any>(`/api/employees/${id}`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -111,7 +111,7 @@ export function useDeleteEmployee() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/employees/${id}`);
+      await api.delete(`/api/employees/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });

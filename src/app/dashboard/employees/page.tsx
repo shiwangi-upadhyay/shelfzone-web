@@ -12,9 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth-store';
+import { exportCSV } from '@/lib/export';
 
 export default function EmployeesPage() {
   const { user } = useAuthStore();
@@ -50,14 +51,31 @@ export default function EmployeesPage() {
             Manage your organization's employees
           </p>
         </div>
-        {canManageEmployees && (
-          <Button asChild>
-            <Link href="/dashboard/employees/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Employee
-            </Link>
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {employees.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => exportCSV(employees, 'employees', [
+                { key: 'employeeCode', label: 'Code' },
+                { key: 'firstName', label: 'First Name' },
+                { key: 'lastName', label: 'Last Name' },
+                { key: 'status', label: 'Status' },
+                { key: 'dateOfJoining', label: 'Date of Joining' },
+              ])}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+          )}
+          {canManageEmployees && (
+            <Button asChild>
+              <Link href="/dashboard/employees/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Employee
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">

@@ -38,7 +38,7 @@ export function useDashboard() {
   return useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => {
-      const response = await api.get<DashboardData>('/me/dashboard');
+      const response = await api.get<DashboardData>('/api/me/dashboard');
       return response;
     },
     staleTime: 1000 * 60, // 1 minute
@@ -50,7 +50,7 @@ export function useNotifications() {
   return useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
-      const response = await api.get<any>('/notifications?limit=10');
+      const response = await api.get<any>('/api/notifications?limit=10');
       return response;
     },
   });
@@ -60,7 +60,7 @@ export function useUnreadCount() {
   return useQuery({
     queryKey: ['notifications', 'unread-count'],
     queryFn: async () => {
-      const response = await api.get<{ count: number }>('/notifications/unread-count');
+      const response = await api.get<{ count: number }>('/api/notifications/unread-count');
       return response;
     },
     refetchInterval: 1000 * 60, // Refetch every minute

@@ -43,7 +43,7 @@ export function usePayslips() {
   return useQuery({
     queryKey: ['payslips'],
     queryFn: async () => {
-      const response = await api.get<any>('/me/payslips');
+      const response = await api.get<any>('/api/me/payslips');
       return response;
     },
   });
@@ -53,7 +53,7 @@ export function usePayslip(id: string) {
   return useQuery({
     queryKey: ['payslips', id],
     queryFn: async () => {
-      const response = await api.get<Payslip>(`/payroll/payslips/${id}`);
+      const response = await api.get<Payslip>(`/api/payroll/payslips/${id}`);
       return response;
     },
     enabled: !!id,
@@ -65,8 +65,8 @@ export function useSalaryStructure(employeeId?: string) {
     queryKey: ['salary-structure', employeeId],
     queryFn: async () => {
       const url = employeeId
-        ? `/payroll/salary-structure/${employeeId}`
-        : '/me/salary-structure';
+        ? `/api/payroll/salary-structure/${employeeId}`
+        : '/api/me/salary-structure';
       const response = await api.get<SalaryStructure>(url);
       return response;
     },

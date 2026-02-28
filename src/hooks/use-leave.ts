@@ -36,7 +36,7 @@ export function useLeaveRequests() {
   return useQuery({
     queryKey: ['leave-requests'],
     queryFn: async () => {
-      const response = await api.get<any>('/me/leaves');
+      const response = await api.get<any>('/api/me/leaves');
       return response;
     },
   });
@@ -46,7 +46,7 @@ export function useLeaveBalance() {
   return useQuery({
     queryKey: ['leave-balance'],
     queryFn: async () => {
-      const response = await api.get<LeaveBalance[]>('/leave-admin/balance');
+      const response = await api.get<LeaveBalance[]>('/api/leave-admin/balance');
       return response;
     },
   });
@@ -63,7 +63,7 @@ export function useApplyLeave() {
       isHalfDay: boolean;
       reason: string;
     }) => {
-      const response = await api.post<any>('/leave/apply', data);
+      const response = await api.post<any>('/api/leave/apply', data);
       return response.data;
     },
     onSuccess: () => {
@@ -83,7 +83,7 @@ export function useCancelLeave() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.put<any>(`/leave/${id}/cancel`);
+      const response = await api.put<any>(`/api/leave/${id}/cancel`);
       return response.data;
     },
     onSuccess: () => {
@@ -107,7 +107,7 @@ export function useReviewLeave() {
       reviewComments?: string;
     }) => {
       const { id, ...body } = data;
-      const response = await api.put<any>(`/leave/${id}/review`, body);
+      const response = await api.put<any>(`/api/leave/${id}/review`, body);
       return response.data;
     },
     onSuccess: () => {
@@ -125,7 +125,7 @@ export function usePendingApprovals() {
   return useQuery({
     queryKey: ['pending-approvals'],
     queryFn: async () => {
-      const response = await api.get<any>('/leave?status=pending');
+      const response = await api.get<any>('/api/leave?status=pending');
       return response;
     },
   });
