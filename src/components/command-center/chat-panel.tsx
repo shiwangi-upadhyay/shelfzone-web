@@ -41,7 +41,11 @@ export function ChatPanel({
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const text = input.trim();
-    if (!text || isLoading) return;
+    console.log('[ChatPanel] handleSubmit', { text, isLoading, disabled, inputLength: input.length });
+    if (!text || isLoading) {
+      console.log('[ChatPanel] BLOCKED:', !text ? 'empty text' : 'isLoading=true');
+      return;
+    }
     onSend(text);
     setInput('');
   };

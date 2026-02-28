@@ -13,7 +13,10 @@ export type EventType =
   | 'agent:error'
   | 'agent:fix'
   | 'agent:completion'
+  | 'agent:message'
+  | 'agent:tool_result'
   | 'cost:update'
+  | 'trace:started'
   | 'trace:completed';
 
 export interface TraceEvent {
@@ -63,11 +66,17 @@ export interface TraceStatus {
 export function useInstruct(masterAgentId: string | null) {
   return useMutation({
     mutationFn: async (instruction: string) => {
-      const res = await api.post<{ traceId: string; sessionId: string }>(
-        '/api/agent-gateway/instruct',
-        { agentId: masterAgentId, instruction }
-      );
-      return res;
+      console.log('[useInstruct] calling POST /api/agent-gateway/instruct', { masterAgentId, instruction });
+      try {
+        const res = await api.post('/api/agent-gateway/instruct', { masterAgentId, instruction });
+        console.log('[useInstruct] raw response:', res);
+        const data = (res as any).data ?? res;
+        console.log('[useInstruct] extracted data:', data);
+        return data as { traceId: string; sessionId: string };
+      } catch (err) {
+        console.error('[useInstruct] CAUGHT ERROR:', err);
+        throw err;
+      }
     },
   });
 }
@@ -92,13 +101,45 @@ export function useTraceStream(traceId: string | null) {
     if (!traceId) return;
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    const es = new EventSource(`${apiUrl}/api/agent-gateway/stream/${traceId}`);
+    // EventSource can't send Authorization header, so pass token as query param
+    let token = '';
+    try {
+      const stored = localStorage.getItem('shelfzone-auth');
+      if (stored) {
+        const { state } = JSON.parse(stored);
+        token = state?.accessToken || '';
+      }
+    } catch {}
+    const es = new EventSource(`${apiUrl}/api/agent-gateway/stream/${traceId}?token=${token}`);
     esRef.current = es;
 
     es.onmessage = (e) => {
       try {
-        const event: TraceEvent = JSON.parse(e.data);
-        event.id = event.id || crypto.randomUUID();
+        const raw = JSON.parse(e.data);
+        // Backend sends { id, type, content, timestamp, fromAgent, toAgent, metadata, ... }
+        // Map to TraceEvent shape expected by the UI
+        const event: TraceEvent = {
+          id: raw.id || Math.random().toString(36).slice(2) + Date.now().toString(36),
+          type: raw.type,
+          timestamp: raw.timestamp,
+          data: {
+            // Map backend fields to what UI components expect
+            text: raw.content,
+            content: raw.content,
+            message: raw.content,
+            result: raw.content,
+            description: raw.content,
+            fromAgent: raw.fromAgent,
+            toAgent: raw.toAgent,
+            agentName: raw.toAgent?.name || raw.fromAgent?.name || 'Agent',
+            agentEmoji: '🤖',
+            tokenCount: raw.tokenCount,
+            cost: raw.cost,
+            durationMs: raw.durationMs,
+            toolName: raw.metadata?.tool,
+            ...(raw.metadata || {}),
+          },
+        };
 
         if (event.type === 'cost:update') {
           setTotalCost(Number(event.data.totalCost) || 0);
@@ -119,7 +160,7 @@ export function useTraceStream(traceId: string | null) {
           setTasks((prev) => [
             ...prev,
             {
-              id: (d.sessionId as string) || crypto.randomUUID(),
+              id: (d.sessionId as string) || Math.random().toString(36).slice(2) + Date.now().toString(36),
               agentEmoji: (d.agentEmoji as string) || '🤖',
               agentName: (d.agentName as string) || 'Agent',
               status: 'running',
