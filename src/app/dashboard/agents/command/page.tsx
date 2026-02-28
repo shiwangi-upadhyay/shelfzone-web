@@ -17,7 +17,11 @@ export default function CommandCenterPage() {
 
   const handleSend = useCallback(
     (instruction: string) => {
-      if (!selectedAgentId) return;
+      console.log('[CommandCenter] handleSend called', { instruction, selectedAgentId, isPending: instruct.isPending });
+      if (!selectedAgentId) {
+        console.log('[CommandCenter] BLOCKED: no selectedAgentId');
+        return;
+      }
 
       // Add user message
       const userMsg: StreamMessage = {
@@ -33,7 +37,11 @@ export default function CommandCenterPage() {
 
       instruct.mutate(instruction, {
         onSuccess: (data) => {
+          console.log('[CommandCenter] instruct success', data);
           setTraceId(data.traceId);
+        },
+        onError: (err) => {
+          console.error('[CommandCenter] instruct ERROR', err);
         },
       });
     },
