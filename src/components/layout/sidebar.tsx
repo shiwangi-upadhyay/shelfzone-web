@@ -23,6 +23,7 @@ import {
   TrendingUp,
   Search,
   Zap,
+  KeyRound,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -125,6 +126,14 @@ const agentNavigation = [
   },
 ];
 
+const settingsNavigation = [
+  {
+    name: 'API Keys',
+    href: '/dashboard/settings/api-keys',
+    icon: KeyRound,
+  },
+];
+
 interface SidebarContentProps {
   pathname: string;
   collapsed?: boolean;
@@ -182,6 +191,37 @@ function SidebarContent({ pathname, collapsed = false, onNavigate }: SidebarCont
         <div className="space-y-1">
           {agentNavigation.map((item) => {
             const isActive = pathname === item.href || (pathname.startsWith(item.href + '/') && item.href !== '/dashboard/agents');
+            const Icon = item.icon;
+            
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={onNavigate}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                )}
+              >
+                <Icon className="h-5 w-5 shrink-0" />
+                {!collapsed && <span>{item.name}</span>}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Settings Section */}
+        {!collapsed && (
+          <div className="mt-4 mb-2 px-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Settings</p>
+          </div>
+        )}
+        {collapsed && <Separator className="my-3" />}
+        <div className="space-y-1">
+          {settingsNavigation.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             const Icon = item.icon;
             
             return (

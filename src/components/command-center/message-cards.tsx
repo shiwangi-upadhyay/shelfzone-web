@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Sparkles,
+  MessageSquare,
 } from 'lucide-react';
 
 // ---- User bubble ----
@@ -147,8 +148,44 @@ export function CompletionCard({ event }: { event: TraceEvent }) {
         <span className="font-semibold text-emerald-800 dark:text-emerald-300">Task Complete</span>
       </div>
       <p className="mt-1.5 text-sm text-emerald-700 dark:text-emerald-200 pl-6 whitespace-pre-wrap">
-        {(event.data.result as string) || (event.data.message as string) || 'Done.'}
+        {(event.data.content as string) || (event.data.result as string) || (event.data.message as string) || 'Done.'}
       </p>
+      {Boolean(event.data.cost || event.data.tokenCount) && (
+        <div className="mt-1.5 pl-6 flex gap-3 text-[10px] font-mono text-emerald-600 dark:text-emerald-400">
+          {event.data.tokenCount ? <span>{String(event.data.tokenCount)} tokens</span> : null}
+          {event.data.cost ? <span>Cost: ${Number(event.data.cost).toFixed(4)}</span> : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- Agent message card ----
+export function AgentMessageCard({ event }: { event: TraceEvent }) {
+  const d = event.data;
+  const agentName = (d.fromAgent as any)?.name || (d.agentName as string) || 'Agent';
+  const model = (d.model as string) || (d.metadata as any)?.model;
+  const cost = d.cost as string | number | undefined;
+  const tokenCount = d.tokenCount as number | undefined;
+
+  return (
+    <div className="animate-in slide-in-from-bottom-2 duration-300 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20 px-4 py-3">
+      <div className="flex items-center gap-2 mb-2">
+        <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+        <span className="text-xs font-semibold text-blue-800 dark:text-blue-300">{agentName}</span>
+        {model && (
+          <span className="ml-auto font-mono text-[10px] text-muted-foreground">{model}</span>
+        )}
+      </div>
+      <div className="text-sm text-foreground whitespace-pre-wrap pl-6">
+        {(d.content as string) || (d.text as string) || (d.message as string) || ''}
+      </div>
+      {(tokenCount || cost) && (
+        <div className="mt-2 pl-6 flex gap-3 text-[10px] font-mono text-muted-foreground">
+          {tokenCount && <span>{tokenCount} tokens</span>}
+          {cost && <span>${Number(cost).toFixed(4)}</span>}
+        </div>
+      )}
     </div>
   );
 }
@@ -166,6 +203,8 @@ export function EventCard({ event }: { event: TraceEvent }) {
       return <ErrorCard event={event} />;
     case 'agent:fix':
       return <FixCard event={event} />;
+    case 'agent:message':
+      return <AgentMessageCard event={event} />;
     case 'agent:completion':
       return <CompletionCard event={event} />;
     default:
