@@ -14,7 +14,10 @@ interface ApiKeyStatus {
 export function useApiKeyStatus() {
   return useQuery<ApiKeyStatus>({
     queryKey: ['api-key-status'],
-    queryFn: () => api.get('/api/user/api-key'),
+    queryFn: async () => {
+      const res = await api.get('/api/user/api-key');
+      return (res as any).data ?? res;
+    },
     staleTime: 30_000,
   });
 }
