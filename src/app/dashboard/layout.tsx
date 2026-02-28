@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { Sidebar } from '@/components/layout/sidebar';
@@ -14,37 +14,27 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [hydrated, setHydrated] = useState(false);
 
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const clearAuth = useAuthStore((state) => state.clearAuth);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const hasHydrated = useAuthStore((s) => s._hasHydrated);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
 
-  // Wait for Zustand to hydrate from localStorage
+  // Auth guard — only runs AFTER Zustand hydration from localStorage
   useEffect(() => {
-    // Zustand persist hydrates synchronously on first render in the browser,
-    // but the component mounts with default state first. Use a microtask to
-    // let hydration complete before checking auth.
-    const timer = setTimeout(() => setHydrated(true), 50);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Auth guard — only runs AFTER hydration
-  useEffect(() => {
-    if (!hydrated) return;
-
+    if (!hasHydrated) return; // Wait for localStorage to load
     if (!isAuthenticated || !accessToken) {
       clearAuth();
       router.push('/login?redirect=' + encodeURIComponent(pathname));
     }
-  }, [hydrated, isAuthenticated, accessToken, router, pathname, clearAuth]);
+  }, [hasHydrated, isAuthenticated, accessToken, router, pathname, clearAuth]);
 
-  // Show loading spinner while hydrating or if not authenticated
-  if (!hydrated || !isAuthenticated || !accessToken) {
+  // Show spinner while hydrating
+  if (!hasHydrated || !isAuthenticated || !accessToken) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent" />
           <p className="mt-4 text-sm text-muted-foreground">Loading...</p>
         </div>
       </div>
