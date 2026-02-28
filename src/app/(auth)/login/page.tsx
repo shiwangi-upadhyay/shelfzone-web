@@ -33,7 +33,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, isLoggingIn, isAuthenticated } = useAuth();
-  const redirect = searchParams.get('redirect') || '/dashboard';
+  const redirect = searchParams.get('redirect') || '/';
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),

@@ -22,7 +22,7 @@ import { Separator } from '@/components/ui/separator';
 const navigation = [
   {
     name: 'Dashboard',
-    href: '/dashboard',
+    href: '/',
     icon: LayoutDashboard,
   },
   {
@@ -68,7 +68,7 @@ function SidebarContent({ pathname, collapsed = false, onNavigate }: SidebarCont
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6">
-        <Link href="/dashboard" className="flex items-center space-x-2" onClick={onNavigate}>
+        <Link href="/" className="flex items-center space-x-2" onClick={onNavigate}>
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
             S
           </div>
