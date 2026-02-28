@@ -1,5 +1,2 @@
-import { PageSkeleton } from '@/components/loading-skeleton';
-
-export default function AgentsLoading() {
-  return <PageSkeleton />;
-}
+import { AgentListSkeleton } from '@/components/skeletons/page-skeletons';
+export default function Loading() { return <AgentListSkeleton />; }
