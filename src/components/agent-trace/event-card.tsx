@@ -40,7 +40,7 @@ export function EventCard({ event }: { event: SessionEvent }) {
           <span>{config.icon}</span>
           <span>{header}</span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
           {event.tokenCount > 0 && <span>{event.tokenCount} tok</span>}
           {cost > 0 && <span>${cost.toFixed(4)}</span>}
           <span>{time}</span>
