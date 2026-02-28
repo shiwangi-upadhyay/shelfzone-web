@@ -30,9 +30,15 @@ export function useAttendance(params?: { month?: number; year?: number }) {
   return useQuery({
     queryKey: ['attendance', params],
     queryFn: async () => {
-      const queryString = params
-        ? `?${new URLSearchParams(params as any).toString()}`
-        : '';
+      const searchParams = new URLSearchParams();
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            searchParams.set(key, String(value));
+          }
+        });
+      }
+      const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
       const response = await api.get<any>(`/api/me/attendance${queryString}`);
       return response.data;
     },

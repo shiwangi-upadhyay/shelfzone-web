@@ -44,7 +44,7 @@ export default function BudgetsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['agent-budgets'],
-    queryFn: () => api.get<{ budgets: Budget[] }>('/api/agent-portal/budgets'),
+    queryFn: () => api.get<any>('/api/agent-portal/budgets'),
   });
 
   const createMutation = useMutation({
@@ -77,7 +77,7 @@ export default function BudgetsPage() {
     });
   };
 
-  const budgets = data?.budgets || [];
+  const budgets = data?.data || [];
 
   const getSpendPercent = (b: Budget) =>
     b.monthlyCapUsd > 0 ? Math.min((b.currentSpend / b.monthlyCapUsd) * 100, 100) : 0;
@@ -145,7 +145,7 @@ export default function BudgetsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {budgets.map((budget) => {
+          {budgets.map((budget: any) => {
             const pct = getSpendPercent(budget);
             return (
               <Card key={budget.id} className={budget.isPaused ? 'border-red-500/50' : ''}>

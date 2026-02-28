@@ -14,21 +14,27 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  // Auth guard - redirect to login if not authenticated
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const hasHydrated = useAuthStore((s) => s._hasHydrated);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
+
+  // Auth guard — only runs AFTER Zustand hydration from localStorage
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!hasHydrated) return; // Wait for localStorage to load
+    if (!isAuthenticated || !accessToken) {
+      clearAuth();
       router.push('/login?redirect=' + encodeURIComponent(pathname));
     }
-  }, [isAuthenticated, router, pathname]);
+  }, [hasHydrated, isAuthenticated, accessToken, router, pathname, clearAuth]);
 
-  // Don't render content until auth check is complete
-  if (!isAuthenticated) {
+  // Show spinner while hydrating
+  if (!hasHydrated || !isAuthenticated || !accessToken) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent" />
           <p className="mt-4 text-sm text-muted-foreground">Loading...</p>
         </div>
       </div>

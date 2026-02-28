@@ -31,7 +31,7 @@ interface PlatformCosts {
 export default function CostsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['agent-costs'],
-    queryFn: () => api.get<PlatformCosts>('/api/agent-portal/costs/platform'),
+    queryFn: () => api.get<any>('/api/agent-portal/costs/platform'),
   });
 
   if (isLoading) {
@@ -113,8 +113,8 @@ export default function CostsPage() {
               </TableHeader>
               <TableBody>
                 {costs.byAgent
-                  .sort((a, b) => b.totalCost - a.totalCost)
-                  .map((agent) => (
+                  .sort((a: any, b: any) => b.totalCost - a.totalCost)
+                  .map((agent: any) => (
                     <TableRow key={agent.agentId}>
                       <TableCell className="font-medium">{agent.agentName}</TableCell>
                       <TableCell>{agent.sessions.toLocaleString()}</TableCell>

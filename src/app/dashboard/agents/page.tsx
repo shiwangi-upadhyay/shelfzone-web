@@ -82,7 +82,7 @@ export default function AgentsPage() {
     queryKey: ['agents', statusFilter],
     queryFn: () => {
       const params = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
-      return api.get<{ agents: Agent[] }>(`/api/agent-portal/agents${params}`);
+      return api.get<any>(`/api/agent-portal/agents${params}`);
     },
   });
 
@@ -124,7 +124,7 @@ export default function AgentsPage() {
     });
   };
 
-  const agents = (data?.agents || []).filter((a) =>
+  const agents = ((data as any)?.data || []).filter((a: any) =>
     search ? a.name.toLowerCase().includes(search.toLowerCase()) : true
   );
 
@@ -241,7 +241,7 @@ export default function AgentsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {agents.map((agent) => (
+                {agents.map((agent: any) => (
                   <TableRow key={agent.id}>
                     <TableCell>
                       <Link href={`/dashboard/agents/${agent.id}`} className="hover:underline">
