@@ -33,7 +33,8 @@ export function useTraces(filters: TraceFilters = {}) {
         if (value !== undefined && value !== null && value !== '') params.set(key, String(value));
       });
       const qs = params.toString();
-      const res = await api.get(`/api/traces${qs ? `?${qs}` : ''}`);
+      const url = `/api/traces${qs ? `?${qs}` : ''}`;
+      const res = await api.get(url);
       return res.data as Trace[];
     },
   });

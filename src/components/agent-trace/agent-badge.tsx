@@ -27,7 +27,7 @@ export function AgentBadge({ name, status, cost, onClick }: AgentBadgeProps) {
       <span>{AGENT_EMOJI[name] || '🤖'}</span>
       <span>{name}</span>
       <StatusDot status={status} />
-      <span className="text-muted-foreground">${Number(cost).toFixed(2)}</span>
+      <span className="text-muted-foreground font-mono">${Number(cost).toFixed(2)}</span>
     </button>
   );
 }

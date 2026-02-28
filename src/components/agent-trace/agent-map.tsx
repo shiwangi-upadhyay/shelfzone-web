@@ -24,8 +24,8 @@ export function AgentMap() {
     name: '', id: null, sessionId: null,
   });
 
-  const { data: employees, isLoading: empLoading } = useOrgAgentOverview();
-  const { data: traces, isLoading: tracesLoading } = useTraces({
+  const { data: employees, isLoading: empLoading, error: empError } = useOrgAgentOverview();
+  const { data: traces, isLoading: tracesLoading, error: tracesError } = useTraces({
     status: statusFilter === 'all' ? undefined : statusFilter,
     search: search || undefined,
     limit: 10,
@@ -53,7 +53,7 @@ export function AgentMap() {
           <div className="py-2">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold">{emp.name}</span>
-              <span className="text-xs text-muted-foreground">${Number(emp.totalCost).toFixed(2)} total</span>
+              <span className="text-xs text-muted-foreground font-mono">${Number(emp.totalCost).toFixed(2)} total</span>
             </div>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
               {emp.agents.map(agent => (
@@ -174,8 +174,8 @@ export function AgentMap() {
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                       <span>🤖 {trace.masterAgent?.name}</span>
-                      {duration !== null && <span>⏱ {Math.floor(duration / 60)}m{duration % 60}s</span>}
-                      <span>💰 ${Number(trace.totalCost).toFixed(2)}</span>
+                      {duration !== null && <span className="font-mono">⏱ {Math.floor(duration / 60)}m{duration % 60}s</span>}
+                      <span className="font-mono">💰 ${Number(trace.totalCost).toFixed(2)}</span>
                       <span>👥 {trace.agentsUsed} agents</span>
                     </div>
                   </div>

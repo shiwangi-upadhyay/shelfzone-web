@@ -94,7 +94,7 @@ export default function TraceDetailPage() {
             {trace.status === 'running' && <LiveIndicator />}
             <h2 className="text-lg font-semibold flex-1">{trace.instruction}</h2>
           </div>
-          <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground font-mono">
             <span>⏱ {formatDuration(trace.startedAt, trace.completedAt)}</span>
             <span>💰 ${Number(trace.totalCost).toFixed(2)}</span>
             <span>👥 {trace.agentsUsed} agents</span>
@@ -139,15 +139,15 @@ export default function TraceDetailPage() {
         <div className="grid grid-cols-3 gap-3">
           <div className="rounded-xl border border-border bg-card shadow-sm p-4 text-center">
             <p className="text-xs text-muted-foreground">Duration</p>
-            <p className="text-xl font-bold">{formatDuration(trace.startedAt, trace.completedAt)}</p>
+            <p className="text-xl font-bold font-mono">{formatDuration(trace.startedAt, trace.completedAt)}</p>
           </div>
           <div className="rounded-xl border border-border bg-card shadow-sm p-4 text-center">
             <p className="text-xs text-muted-foreground">Total Cost</p>
-            <p className="text-xl font-bold">${Number(trace.totalCost).toFixed(2)}</p>
+            <p className="text-xl font-bold font-mono">${Number(trace.totalCost).toFixed(2)}</p>
           </div>
           <div className="rounded-xl border border-border bg-card shadow-sm p-4 text-center">
             <p className="text-xs text-muted-foreground">Agents Used</p>
-            <p className="text-xl font-bold">{trace.agentsUsed}</p>
+            <p className="text-xl font-bold font-mono">{trace.agentsUsed}</p>
           </div>
         </div>
       </div>
