@@ -1,102 +1,55 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
-import ReactFlow, {
-  Background,
-  Controls,
-  MiniMap,
-  Node,
-  Edge,
-  useNodesState,
-  useEdgesState,
-  ConnectionMode,
-} from 'reactflow';
+import { useCallback } from 'react';
+import ReactFlow, { Background, Controls, type Node } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { FlowNode } from './flow-node';
-import { FlowEdge } from './flow-edge';
+import FlowAgentNode from './flow-node';
+import FlowDelegationEdge from './flow-edge';
+import { useTraceFlow } from '@/hooks/use-trace-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 
+const nodeTypes = { flowAgent: FlowAgentNode };
+const edgeTypes = { flowDelegation: FlowDelegationEdge };
+
 interface TaskFlowGraphProps {
-  nodes: Node[];
-  edges: Edge[];
-  onNodeClick?: (node: Node) => void;
-  isLoading?: boolean;
+  traceId: string;
+  onNodeClick?: (sessionId: string, agentName: string, agentId: string) => void;
 }
 
-const nodeTypes = {
-  custom: FlowNode,
-};
+export function TaskFlowGraph({ traceId, onNodeClick }: TaskFlowGraphProps) {
+  const { data, isLoading } = useTraceFlow(traceId);
 
-const edgeTypes = {
-  custom: FlowEdge,
-};
-
-export function TaskFlowGraph({
-  nodes: initialNodes,
-  edges: initialEdges,
-  onNodeClick,
-  isLoading,
-}: TaskFlowGraphProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-
-  // Update when props change
-  useEffect(() => {
-    if (initialNodes.length > 0) {
-      setNodes(initialNodes);
+  const handleNodeClick = useCallback((_: unknown, node: Node) => {
+    if (node.data?.sessionId && onNodeClick) {
+      onNodeClick(node.data.sessionId, node.data.name, node.data.agentId);
     }
-  }, [initialNodes, setNodes]);
-
-  useEffect(() => {
-    if (initialEdges.length > 0) {
-      setEdges(initialEdges);
-    }
-  }, [initialEdges, setEdges]);
-
-  const handleNodeClick = useCallback(
-    (_: React.MouseEvent, node: Node) => {
-      onNodeClick?.(node);
-    },
-    [onNodeClick]
-  );
+  }, [onNodeClick]);
 
   if (isLoading) {
-    return <Skeleton className="w-full h-[500px]" />;
+    return <Skeleton className="h-[500px] w-full rounded-xl" />;
   }
 
-  if (nodes.length === 0 && initialNodes.length === 0) {
+  if (!data) {
     return (
-      <div className="flex items-center justify-center h-[500px] border rounded-lg bg-muted/10">
-        <p className="text-muted-foreground">No flow data available</p>
+      <div className="flex items-center justify-center h-[500px] text-muted-foreground">
+        <p>No flow data available</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-[500px] border rounded-lg overflow-hidden">
+    <div className="h-[500px] rounded-xl border border-border bg-card overflow-hidden">
       <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeClick={handleNodeClick}
+        nodes={data.nodes}
+        edges={data.edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        connectionMode={ConnectionMode.Loose}
+        onNodeClick={handleNodeClick}
         fitView
-        attributionPosition="bottom-right"
-        defaultEdgeOptions={{
-          type: 'custom',
-        }}
+        proOptions={{ hideAttribution: true }}
       >
-        <Background />
+        <Background gap={20} size={1} />
         <Controls />
-        <MiniMap
-          nodeStrokeWidth={3}
-          zoomable
-          pannable
-          className="bg-background"
-        />
       </ReactFlow>
     </div>
   );

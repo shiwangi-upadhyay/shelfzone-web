@@ -1,161 +1,148 @@
+'use client';
+
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-
-export interface FlowNode {
-  id: string;
-  type: string;
-  data: {
-    label: string;
-    emoji?: string;
-    agentName?: string;
-    cost?: number;
-    duration?: number;
-    status?: string;
-    sessionId?: string;
-  };
-  position: { x: number; y: number };
-}
-
-export interface FlowEdge {
-  id: string;
-  source: string;
-  target: string;
-  label?: string;
-  animated?: boolean;
-  type?: string;
-}
-
-export interface TraceFlowData {
-  nodes: FlowNode[];
-  edges: FlowEdge[];
-}
+import type { Node, Edge } from 'reactflow';
 
 const AGENT_EMOJI: Record<string, string> = {
-  SHIWANGI: '🏗️',
-  BackendForge: '⚙️',
-  DataArchitect: '🗄️',
-  ShieldOps: '🛡️',
-  PortalEngine: '🖥️',
-  UIcraft: '🎨',
-  TestRunner: '🧪',
-  DocSmith: '📝',
+  SHIWANGI: '🏗️', BackendForge: '⚙️', DataArchitect: '🗄️',
+  ShieldOps: '🛡️', PortalEngine: '🖥️', UIcraft: '🎨',
+  TestRunner: '🧪', DocSmith: '📝',
 };
 
-function formatDuration(ms: number): string {
-  const seconds = Math.floor(ms / 1000);
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${minutes}m${secs > 0 ? `${secs}s` : ''}`;
+interface FlowApiNode {
+  id: string;
+  agentId: string;
+  agentName: string;
+  cost: number;
+  duration: number;
+  status: string;
 }
 
-export function useTraceFlow(traceId: string) {
+interface FlowApiEdge {
+  from: string;
+  to: string;
+  label: string;
+  type: string;
+}
+
+function formatDuration(ms: number): string {
+  const totalSec = Math.floor(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  if (m > 0) return `${m}m${s}s`;
+  return `${s}s`;
+}
+
+export function useTraceFlow(traceId: string | null) {
   return useQuery({
     queryKey: ['trace-flow', traceId],
     queryFn: async () => {
-      const response = await api.get(`/api/traces/${traceId}/flow`);
-      const raw = response.data || response;
+      const res = await api.get(`/api/traces/${traceId}/flow`);
+      const apiNodes: FlowApiNode[] = res.data.nodes;
+      const apiEdges: FlowApiEdge[] = res.data.edges;
 
-      // Transform API nodes to ReactFlow nodes
-      const nodeCount = raw.nodes?.length || 0;
-      const centerX = 400;
+      // Build agentId→node map
+      const agentIdToNode = new Map<string, FlowApiNode>();
+      apiNodes.forEach(n => agentIdToNode.set(n.agentId, n));
 
-      // Owner node at top
-      const ownerNode: FlowNode = {
+      // Find root (nodes that are not targets of any edge)
+      const targets = new Set(apiEdges.map(e => e.to));
+      const roots = apiNodes.filter(n => !targets.has(n.agentId));
+      
+      // Build adjacency
+      const children = new Map<string, string[]>();
+      apiEdges.forEach(e => {
+        if (!children.has(e.from)) children.set(e.from, []);
+        children.get(e.from)!.push(e.to);
+      });
+
+      // Layout: BFS positioning
+      const nodes: Node[] = [];
+      const X_GAP = 250;
+      const Y_GAP = 150;
+
+      // Owner node
+      nodes.push({
         id: 'owner',
-        type: 'custom',
-        data: {
-          label: '👤 Owner',
-          emoji: '👤',
-          agentName: 'Owner',
-          status: 'completed',
-        },
-        position: { x: centerX, y: 0 },
-      };
-
-      // Find the master agent (SHIWANGI — the one with no parent/delegatedBy in flow)
-      const masterNode = raw.nodes?.find((n: any) => n.agentName === 'SHIWANGI') || raw.nodes?.[0];
-      const subNodes = raw.nodes?.filter((n: any) => n.id !== masterNode?.id) || [];
-
-      const nodes: FlowNode[] = [ownerNode];
-
-      if (masterNode) {
-        nodes.push({
-          id: masterNode.id,
-          type: 'custom',
-          data: {
-            label: masterNode.agentName,
-            emoji: AGENT_EMOJI[masterNode.agentName] || '🤖',
-            agentName: masterNode.agentName,
-            cost: Number(masterNode.cost),
-            duration: masterNode.duration,
-            status: masterNode.status,
-            sessionId: masterNode.id,
-          },
-          position: { x: centerX, y: 150 },
-        });
-      }
-
-      // Spread sub-agents horizontally below master
-      const spacing = 180;
-      const totalWidth = (subNodes.length - 1) * spacing;
-      const startX = centerX - totalWidth / 2;
-
-      subNodes.forEach((node: any, index: number) => {
-        nodes.push({
-          id: node.id,
-          type: 'custom',
-          data: {
-            label: node.agentName,
-            emoji: AGENT_EMOJI[node.agentName] || '🤖',
-            agentName: node.agentName,
-            cost: Number(node.cost),
-            duration: node.duration,
-            status: node.status,
-            sessionId: node.id,
-          },
-          position: { x: startX + index * spacing, y: 350 },
-        });
+        type: 'flowAgent',
+        position: { x: 400, y: 0 },
+        data: { emoji: '👤', name: 'Owner', cost: 0, duration: '', status: 'completed', isOwner: true },
       });
 
-      // Edges: owner → master, master → each sub-agent
-      const edges: FlowEdge[] = [];
+      // Position nodes level by level
+      const visited = new Set<string>();
+      let queue = roots.map(r => r.agentId);
+      let level = 1;
 
-      if (masterNode) {
+      while (queue.length > 0) {
+        const nextQueue: string[] = [];
+        const totalWidth = (queue.length - 1) * X_GAP;
+        const startX = 400 - totalWidth / 2;
+
+        queue.forEach((agentId, i) => {
+          if (visited.has(agentId)) return;
+          visited.add(agentId);
+          const n = agentIdToNode.get(agentId);
+          if (!n) return;
+
+          nodes.push({
+            id: n.id,
+            type: 'flowAgent',
+            position: { x: startX + i * X_GAP, y: level * Y_GAP },
+            data: {
+              emoji: AGENT_EMOJI[n.agentName] || '🤖',
+              name: n.agentName,
+              cost: n.cost,
+              duration: formatDuration(n.duration),
+              status: n.status,
+              sessionId: n.id,
+              agentId: n.agentId,
+            },
+          });
+
+          const kids = children.get(agentId) || [];
+          nextQueue.push(...kids);
+        });
+
+        queue = nextQueue;
+        level++;
+      }
+
+      // Edges
+      const edges: Edge[] = [];
+      // Owner → roots
+      roots.forEach(r => {
         edges.push({
-          id: `owner-${masterNode.id}`,
+          id: `owner-${r.id}`,
           source: 'owner',
-          target: masterNode.id,
-          label: 'Instruction',
-          type: 'custom',
+          target: r.id,
+          type: 'flowDelegation',
+          data: { label: 'Orchestrate' },
+          animated: r.status === 'running',
         });
-      }
-
-      // Use API edges for master → sub-agent delegation labels
-      const edgeMap = new Map<string, string>();
-      raw.edges?.forEach((e: any) => {
-        const key = `${e.from}-${e.to}`;
-        if (!edgeMap.has(key)) {
-          edgeMap.set(key, e.label);
-        }
       });
 
-      subNodes.forEach((node: any) => {
-        const edgeLabel = masterNode
-          ? edgeMap.get(`${masterNode.agentId}-${node.agentId}`) || 'Delegation'
-          : 'Delegation';
+      // Build sessionId lookup by agentId
+      const agentToSession = new Map<string, string>();
+      apiNodes.forEach(n => agentToSession.set(n.agentId, n.id));
 
+      apiEdges.forEach((e, i) => {
+        const sourceSession = agentToSession.get(e.from);
+        const targetSession = agentToSession.get(e.to);
+        if (!sourceSession || !targetSession) return;
+        const targetNode = agentIdToNode.get(e.to);
         edges.push({
-          id: `${masterNode?.id || 'master'}-${node.id}`,
-          source: masterNode?.id || 'master',
-          target: node.id,
-          label: edgeLabel.length > 50 ? edgeLabel.slice(0, 47) + '...' : edgeLabel,
-          animated: node.status === 'running',
-          type: 'custom',
+          id: `e-${i}`,
+          source: sourceSession,
+          target: targetSession,
+          type: 'flowDelegation',
+          data: { label: e.label.length > 60 ? e.label.slice(0, 57) + '...' : e.label },
+          animated: targetNode?.status === 'running',
         });
       });
 
-      return { nodes, edges } as TraceFlowData;
+      return { nodes, edges };
     },
     enabled: !!traceId,
   });

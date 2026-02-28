@@ -1,44 +1,32 @@
+'use client';
+
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search } from 'lucide-react';
 
 interface TraceFiltersProps {
-  onFilterChange: (filters: {
-    status?: string;
-    search?: string;
-    dateFrom?: string;
-    dateTo?: string;
-  }) => void;
+  search: string;
+  onSearchChange: (v: string) => void;
+  status: string;
+  onStatusChange: (v: string) => void;
 }
 
-export function TraceFilters({ onFilterChange }: TraceFiltersProps) {
-  const handleStatusChange = (status: string) => {
-    onFilterChange({ status: status === 'all' ? undefined : status });
-  };
-
-  const handleSearchChange = (search: string) => {
-    onFilterChange({ search });
-  };
-
+export function TraceFilters({ search, onSearchChange, status, onStatusChange }: TraceFiltersProps) {
   return (
-    <div className="flex gap-3 items-center">
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search traces..."
-          onChange={(e) => handleSearchChange(e.target.value)}
-          className="pl-9"
-        />
-      </div>
-      <Select defaultValue="all" onValueChange={handleStatusChange}>
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Filter by status" />
+    <div className="flex items-center gap-3">
+      <Input
+        placeholder="Search traces..."
+        value={search}
+        onChange={(e) => onSearchChange(e.target.value)}
+        className="w-64"
+      />
+      <Select value={status} onValueChange={onStatusChange}>
+        <SelectTrigger className="w-40">
+          <SelectValue placeholder="All statuses" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Status</SelectItem>
-          <SelectItem value="pending">Pending</SelectItem>
-          <SelectItem value="running">Running</SelectItem>
+          <SelectItem value="all">All statuses</SelectItem>
           <SelectItem value="completed">Completed</SelectItem>
+          <SelectItem value="running">Running</SelectItem>
           <SelectItem value="failed">Failed</SelectItem>
         </SelectContent>
       </Select>

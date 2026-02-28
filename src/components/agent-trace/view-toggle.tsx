@@ -1,23 +1,31 @@
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+'use client';
+
+import { Button } from '@/components/ui/button';
 
 interface ViewToggleProps {
-  value: 'org' | 'agent';
-  onChange: (value: 'org' | 'agent') => void;
+  view: 'org' | 'agent';
+  onChange: (view: 'org' | 'agent') => void;
 }
 
-export function ViewToggle({ value, onChange }: ViewToggleProps) {
+export function ViewToggle({ view, onChange }: ViewToggleProps) {
   return (
-    <Tabs value={value} onValueChange={(v) => onChange(v as 'org' | 'agent')}>
-      <TabsList>
-        <TabsTrigger value="org" className="gap-1.5">
-          <span>👥</span>
-          <span>Org View</span>
-        </TabsTrigger>
-        <TabsTrigger value="agent" className="gap-1.5">
-          <span>🤖</span>
-          <span>Agent View</span>
-        </TabsTrigger>
-      </TabsList>
-    </Tabs>
+    <div className="inline-flex rounded-lg border border-border bg-muted p-1">
+      <Button
+        variant={view === 'org' ? 'default' : 'ghost'}
+        size="sm"
+        onClick={() => onChange('org')}
+        className="text-xs"
+      >
+        👥 Org View
+      </Button>
+      <Button
+        variant={view === 'agent' ? 'default' : 'ghost'}
+        size="sm"
+        onClick={() => onChange('agent')}
+        className="text-xs"
+      >
+        🤖 Agent View
+      </Button>
+    </div>
   );
 }

@@ -1,142 +1,66 @@
-import { SessionEvent } from '@/hooks/use-session-events';
-import { ThinkingEvent } from './thinking-event';
-import { ToolCallEvent } from './tool-call-event';
-import { MessageEvent } from './message-event';
-import { ErrorEvent } from './error-event';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+'use client';
 
-interface EventCardProps {
-  event: SessionEvent;
-}
+import { useState } from 'react';
+import type { SessionEvent } from '@/hooks/use-session-events';
 
-export function EventCard({ event }: EventCardProps) {
-  const { type, content, metadata, timestamp, cost } = event;
+const EVENT_CONFIG: Record<string, { icon: string; border: string; label: string }> = {
+  instruction: { icon: '📥', border: 'border-l-blue-500', label: 'Instruction' },
+  thinking: { icon: '🧠', border: 'border-l-amber-500', label: 'Thinking' },
+  tool_call: { icon: '🔧', border: 'border-l-zinc-400', label: 'Tool Call' },
+  delegation: { icon: '➡️', border: 'border-l-purple-500', label: 'Delegation' },
+  message_in: { icon: '📥', border: 'border-l-green-500', label: 'Message In' },
+  message_out: { icon: '📤', border: 'border-l-green-500', label: 'Message Out' },
+  report: { icon: '📤', border: 'border-l-green-500', label: 'Report' },
+  error: { icon: '❌', border: 'border-l-red-500', label: 'Error' },
+  fix: { icon: '✅', border: 'border-l-green-500', label: 'Fix' },
+  completion: { icon: '🏁', border: 'border-l-purple-500', label: 'Completed' },
+};
 
-  // Thinking event
-  if (type === 'thinking') {
-    return <ThinkingEvent content={content} timestamp={timestamp} cost={cost} />;
-  }
+export function EventCard({ event }: { event: SessionEvent }) {
+  const [expanded, setExpanded] = useState(event.type !== 'thinking');
+  const config = EVENT_CONFIG[event.type] || { icon: '📎', border: 'border-l-zinc-300', label: event.type };
 
-  // Tool call event
-  if (type === 'tool_call') {
-    return (
-      <ToolCallEvent
-        toolName={metadata?.toolName || 'Unknown'}
-        command={metadata?.command}
-        result={metadata?.result}
-        timestamp={timestamp}
-        cost={cost}
-      />
-    );
-  }
+  const header = (() => {
+    switch (event.type) {
+      case 'instruction': return `FROM: ${event.fromAgent?.name || 'Owner'}`;
+      case 'delegation': return `TO: ${event.toAgent?.name || 'Unknown'}`;
+      case 'message_in': return `FROM: ${event.fromAgent?.name || 'Unknown'}`;
+      case 'completion': return 'COMPLETED';
+      default: return config.label;
+    }
+  })();
 
-  // Message in/out events
-  if (type === 'instruction' || type === 'message_in') {
-    return (
-      <MessageEvent
-        type="in"
-        sender={metadata?.sender || 'Unknown'}
-        content={content}
-        timestamp={timestamp}
-        cost={cost}
-      />
-    );
-  }
+  const cost = Number(event.cost);
+  const time = new Date(event.timestamp).toLocaleTimeString();
 
-  if (type === 'message_out' || type === 'report') {
-    return (
-      <MessageEvent
-        type="out"
-        recipient={metadata?.recipient || 'Unknown'}
-        content={content}
-        timestamp={timestamp}
-        cost={cost}
-      />
-    );
-  }
-
-  // Error event
-  if (type === 'error' || type === 'fix') {
-    return (
-      <ErrorEvent
-        content={content}
-        errorType={metadata?.errorType}
-        fixDescription={type === 'fix' ? content : metadata?.fixDescription}
-        timestamp={timestamp}
-        cost={cost}
-      />
-    );
-  }
-
-  // Delegation event
-  if (type === 'delegation') {
-    return (
-      <Card className="border-purple-200 dark:border-purple-900 bg-purple-50 dark:bg-purple-950/20 p-4">
-        <div className="flex items-start gap-3">
-          <span className="text-xl">➡️</span>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-sm text-purple-900 dark:text-purple-100">
-                  Delegated to
-                </span>
-                <Badge variant="outline" className="text-xs">
-                  {metadata?.subAgentName || 'Sub-agent'}
-                </Badge>
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {new Date(timestamp).toLocaleTimeString()}
-              </span>
-            </div>
-            <p className="text-sm whitespace-pre-wrap">{content}</p>
-          </div>
-        </div>
-      </Card>
-    );
-  }
-
-  // Completion event
-  if (type === 'completion') {
-    return (
-      <Card className="border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/20 p-4">
-        <div className="flex items-start gap-3">
-          <span className="text-xl">🏁</span>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="font-medium text-sm text-green-900 dark:text-green-100">
-                Completed
-              </span>
-              <div className="flex items-center gap-2">
-                {cost !== undefined && (
-                  <span className="text-xs text-muted-foreground">
-                    ${Number(cost).toFixed(6)}
-                  </span>
-                )}
-                <span className="text-xs text-muted-foreground">
-                  {new Date(timestamp).toLocaleTimeString()}
-                </span>
-              </div>
-            </div>
-            <p className="text-sm whitespace-pre-wrap">{content}</p>
-          </div>
-        </div>
-      </Card>
-    );
-  }
-
-  // Fallback for unknown event types
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <Badge variant="outline" className="text-xs">
-          {type}
-        </Badge>
-        <span className="text-xs text-muted-foreground">
-          {new Date(timestamp).toLocaleTimeString()}
-        </span>
+    <div className={`border-l-4 ${config.border} rounded-lg bg-card shadow-sm p-3 space-y-1`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <span>{config.icon}</span>
+          <span>{header}</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {event.tokenCount > 0 && <span>{event.tokenCount} tok</span>}
+          {cost > 0 && <span>${cost.toFixed(4)}</span>}
+          <span>{time}</span>
+        </div>
       </div>
-      <p className="text-sm whitespace-pre-wrap">{content}</p>
-    </Card>
+      {event.type === 'thinking' && !expanded ? (
+        <button
+          onClick={() => setExpanded(true)}
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          {event.content.slice(0, 100)}... <span className="underline">expand</span>
+        </button>
+      ) : (
+        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{event.content}</p>
+      )}
+      {event.type === 'thinking' && expanded && (
+        <button onClick={() => setExpanded(false)} className="text-xs underline text-muted-foreground">
+          collapse
+        </button>
+      )}
+    </div>
   );
 }

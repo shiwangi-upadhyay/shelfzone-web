@@ -1,84 +1,34 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 export interface SessionEvent {
   id: string;
   sessionId: string;
-  type: 'instruction' | 'message_in' | 'message_out' | 'report' | 'thinking' | 
-        'tool_call' | 'tool_result' | 'error' | 'fix' | 'delegation' | 'completion';
+  type: string;
+  fromAgentId: string | null;
+  toAgentId: string | null;
   content: string;
-  metadata?: {
-    sender?: string;
-    recipient?: string;
-    toolName?: string;
-    command?: string;
-    result?: string;
-    subAgentId?: string;
-    subAgentName?: string;
-    errorType?: string;
-    fixDescription?: string;
-  };
+  metadata: Record<string, unknown>;
+  tokenCount: number;
+  cost: string;
+  durationMs: number;
   timestamp: string;
-  tokensIn?: number;
-  tokensOut?: number;
-  cost?: number;
+  fromAgent: { id: string; name: string } | null;
+  toAgent: { id: string; name: string } | null;
 }
 
-export interface EventFilters {
-  type?: string;
-  search?: string;
-  dateFrom?: string;
-  dateTo?: string;
-}
-
-export function useSessionEvents(sessionId: string, filters?: EventFilters) {
+export function useSessionEvents(sessionId: string | null, opts?: { type?: string }) {
   return useQuery({
-    queryKey: ['session-events', sessionId, filters],
+    queryKey: ['session-events', sessionId, opts?.type],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters) {
-        Object.entries(filters).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== '') {
-            params.set(key, String(value));
-          }
-        });
-      }
-      const queryString = params.toString();
-      const url = `/api/sessions/${sessionId}/events${queryString ? `?${queryString}` : ''}`;
-      const response = await api.get(url);
-      return response.data;
+      if (opts?.type) params.set('type', opts.type);
+      const qs = params.toString();
+      const res = await api.get(`/api/sessions/${sessionId}/events${qs ? `?${qs}` : ''}`);
+      return res.data as SessionEvent[];
     },
     enabled: !!sessionId,
-  });
-}
-
-export function useSessionTimeline(sessionId: string) {
-  return useQuery({
-    queryKey: ['session-timeline', sessionId],
-    queryFn: async () => {
-      const response = await api.get(`/api/sessions/${sessionId}/timeline`);
-      return response.data;
-    },
-    enabled: !!sessionId,
-  });
-}
-
-export function useCreateEvent() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (data: { 
-      sessionId: string; 
-      type: string; 
-      content: string;
-      metadata?: Record<string, any>;
-    }) => {
-      const response = await api.post(`/api/sessions/${data.sessionId}/events`, data);
-      return response.data;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['session-events', variables.sessionId] });
-      queryClient.invalidateQueries({ queryKey: ['session-timeline', variables.sessionId] });
-    },
   });
 }

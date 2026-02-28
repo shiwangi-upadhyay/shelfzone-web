@@ -1,56 +1,27 @@
+'use client';
+
 import { memo } from 'react';
-import { EdgeProps, getBezierPath, EdgeLabelRenderer } from 'reactflow';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from 'reactflow';
 
-export const FlowEdge = memo(
-  ({
-    id,
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    sourcePosition,
-    targetPosition,
-    data,
-    markerEnd,
-  }: EdgeProps) => {
-    const [edgePath, labelX, labelY] = getBezierPath({
-      sourceX,
-      sourceY,
-      sourcePosition,
-      targetX,
-      targetY,
-      targetPosition,
-    });
+function FlowDelegationEdge(props: EdgeProps) {
+  const { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data } = props;
+  const [edgePath, labelX, labelY] = getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition });
 
-    return (
-      <>
-        <path
-          id={id}
-          className="react-flow__edge-path"
-          d={edgePath}
-          markerEnd={markerEnd}
-          style={{
-            stroke: data?.animated ? 'hsl(var(--primary))' : 'hsl(var(--border))',
-            strokeWidth: 2,
-          }}
-        />
-        {data?.label && (
-          <EdgeLabelRenderer>
-            <div
-              style={{
-                position: 'absolute',
-                transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-                pointerEvents: 'all',
-              }}
-              className="bg-background border rounded px-2 py-1 text-xs font-medium shadow-sm max-w-[150px] truncate"
-            >
-              {data.label}
-            </div>
-          </EdgeLabelRenderer>
-        )}
-      </>
-    );
-  }
-);
+  return (
+    <>
+      <BaseEdge path={edgePath} style={{ stroke: 'hsl(var(--border))', strokeWidth: 2 }} />
+      {data?.label && (
+        <EdgeLabelRenderer>
+          <div
+            style={{ transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)` }}
+            className="absolute text-[10px] bg-card border border-border rounded px-1.5 py-0.5 text-muted-foreground max-w-[200px] truncate pointer-events-none"
+          >
+            {data.label}
+          </div>
+        </EdgeLabelRenderer>
+      )}
+    </>
+  );
+}
 
-FlowEdge.displayName = 'FlowEdge';
+export default memo(FlowDelegationEdge);

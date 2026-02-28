@@ -1,285 +1,205 @@
 'use client';
 
-import { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useOrgAgentOverview } from '@/hooks/use-agent-stats';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useOrgAgentOverview, type OrgEmployee } from '@/hooks/use-agent-stats';
 import { useTraces } from '@/hooks/use-traces';
 import { ViewToggle } from './view-toggle';
-import { AgentBadge } from './agent-badge';
+import { TraceFilters } from './trace-filters';
+import { AgentBadge, StatusDot } from './agent-badge';
+import { AgentTree } from './agent-tree';
 import { AgentDetailPanel } from './agent-detail-panel';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Eye, Users, Bot } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-
-// Agent emoji map
-const AGENT_EMOJI: Record<string, string> = {
-  SHIWANGI: '🏗️',
-  BackendForge: '⚙️',
-  DataArchitect: '🗄️',
-  ShieldOps: '🛡️',
-  PortalEngine: '🖥️',
-  UIcraft: '🎨',
-  TestRunner: '🧪',
-  DocSmith: '📝',
-};
-
-function getAgentEmoji(name: string): string {
-  return AGENT_EMOJI[name] || '🤖';
-}
-
-function mapStatus(status: string): 'active' | 'idle' | 'offline' {
-  if (status === 'ACTIVE') return 'active';
-  if (status === 'INACTIVE' || status === 'PAUSED') return 'idle';
-  return 'offline';
-}
-
-// API response types
-interface OrgAgent {
-  id: string;
-  name: string;
-  status: string;
-  totalCost: number;
-  sessionCount: number;
-}
-
-interface OrgEmployee {
-  employeeId: string;
-  name: string;
-  managerId: string | null;
-  department: { id: string; name: string };
-  agents: OrgAgent[];
-  totalCost: number;
-  activeAgents: number;
-  teamCost: number;
-  teamActiveAgents: number;
-}
+import { Badge } from '@/components/ui/badge';
 
 export function AgentMap() {
-  const [viewMode, setViewMode] = useState<'org' | 'agent'>('agent');
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-  const [selectedAgent, setSelectedAgent] = useState<any>(null);
   const router = useRouter();
+  const [view, setView] = useState<'org' | 'agent'>('org');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
-  const { data: orgData, isLoading: orgLoading } = useOrgAgentOverview();
-  const { data: tracesData, isLoading: tracesLoading } = useTraces({ limit: 10 });
+  // Panel state
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<{ name: string; id: string | null; sessionId: string | null; status?: string }>({
+    name: '', id: null, sessionId: null,
+  });
 
-  // Cast orgData to our type
-  const employees: OrgEmployee[] = Array.isArray(orgData) ? orgData : [];
+  const { data: employees, isLoading: empLoading } = useOrgAgentOverview();
+  const { data: traces, isLoading: tracesLoading } = useTraces({
+    status: statusFilter === 'all' ? undefined : statusFilter,
+    search: search || undefined,
+    limit: 10,
+  });
 
-  // Build tree from flat list
-  const buildTree = (employees: OrgEmployee[]) => {
-    const map = new Map<string, OrgEmployee & { children: OrgEmployee[] }>();
-    const roots: (OrgEmployee & { children: OrgEmployee[] })[] = [];
-
-    employees.forEach((emp) => {
-      map.set(emp.employeeId, { ...emp, children: [] });
-    });
-
-    employees.forEach((emp) => {
-      const node = map.get(emp.employeeId)!;
-      if (emp.managerId && map.has(emp.managerId)) {
-        map.get(emp.managerId)!.children.push(node);
-      } else {
-        roots.push(node);
-      }
-    });
-
-    return roots;
+  const openPanel = (name: string, id: string | null, sessionId: string | null, status?: string) => {
+    setSelectedAgent({ name, id, sessionId, status });
+    setPanelOpen(true);
   };
 
-  const tree = buildTree(employees);
+  // Group employees by department
+  const departments = new Map<string, OrgEmployee[]>();
+  (employees || []).forEach(emp => {
+    const dept = emp.department?.name || 'Unassigned';
+    if (!departments.has(dept)) departments.set(dept, []);
+    departments.get(dept)!.push(emp);
+  });
 
-  const handleAgentClick = (agent: OrgAgent, employeeName: string) => {
-    setSelectedAgentId(agent.id);
-    setSelectedAgent({
-      id: agent.id,
-      name: agent.name,
-      emoji: getAgentEmoji(agent.name),
-      status: mapStatus(agent.status),
-      costToday: Number(agent.totalCost),
-      ownerName: employeeName,
-    });
-  };
-
-  const renderEmployeeNode = (
-    employee: OrgEmployee & { children: OrgEmployee[] },
-    level: number = 0,
-  ) => {
-    const showAgents = viewMode === 'agent';
-    const hasAgents = employee.agents && employee.agents.length > 0;
-
-    return (
-      <div key={employee.employeeId} className="relative">
-        <Card className="p-4 mb-3 hover:shadow-md transition-shadow">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-sm">{employee.name}</h3>
-                {hasAgents && (
-                  <Badge variant="outline" className="text-xs">
-                    <Bot className="h-3 w-3 mr-1" />
-                    {employee.agents.length} agent{employee.agents.length > 1 ? 's' : ''}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {employee.department.name}
-              </p>
-              {viewMode === 'agent' && hasAgents && (
-                <p className="text-xs font-medium text-primary mt-1">
-                  Total: ${Number(employee.totalCost).toFixed(2)} · {employee.activeAgents} active
-                </p>
-              )}
+  // Build manager→reports tree
+  const buildTree = (emps: OrgEmployee[], parentId: string | null = null, depth = 0): React.ReactNode[] => {
+    return emps
+      .filter(e => e.managerId === parentId)
+      .map(emp => (
+        <div key={emp.employeeId} className={depth > 0 ? 'ml-8 border-l-2 border-border pl-4' : ''}>
+          <div className="py-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold">{emp.name}</span>
+              <span className="text-xs text-muted-foreground">${Number(emp.totalCost).toFixed(2)} total</span>
             </div>
-          </div>
-
-          {/* Agent Badges — shown in Agent View */}
-          {showAgents && hasAgents && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {employee.agents.map((agent) => (
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {emp.agents.map(agent => (
                 <AgentBadge
                   key={agent.id}
                   name={agent.name}
-                  emoji={getAgentEmoji(agent.name)}
-                  status={mapStatus(agent.status)}
-                  cost={Number(agent.totalCost)}
-                  onClick={() => handleAgentClick(agent, employee.name)}
+                  status={agent.status}
+                  cost={agent.totalCost}
+                  onClick={() => openPanel(agent.name, agent.id, null, agent.status)}
                 />
               ))}
+              {emp.agents.length === 0 && (
+                <span className="text-xs text-muted-foreground italic">No agents</span>
+              )}
             </div>
-          )}
-        </Card>
-
-        {/* Child employees */}
-        {employee.children && employee.children.length > 0 && (
-          <div className="ml-8 border-l-2 border-muted pl-4">
-            {employee.children.map((child: any) => renderEmployeeNode(child, level + 1))}
           </div>
-        )}
-      </div>
-    );
+          {buildTree(emps, emp.employeeId, depth + 1)}
+        </div>
+      ));
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Agent Trace</h1>
-          <p className="text-sm text-muted-foreground">
-            {viewMode === 'org' ? 'Organization hierarchy' : 'Agents across your organization'}
-          </p>
-        </div>
-        <ViewToggle value={viewMode} onChange={setViewMode} />
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <ViewToggle view={view} onChange={setView} />
+        <TraceFilters
+          search={search}
+          onSearchChange={setSearch}
+          status={statusFilter}
+          onStatusChange={setStatusFilter}
+        />
       </div>
 
-      {/* Org Tree */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          {viewMode === 'org' ? (
-            <Users className="h-5 w-5 text-muted-foreground" />
-          ) : (
-            <Bot className="h-5 w-5 text-muted-foreground" />
+      {/* Content */}
+      {empLoading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-32 w-full rounded-xl" />
+          ))}
+        </div>
+      ) : view === 'org' ? (
+        /* ORG VIEW */
+        <div className="space-y-4">
+          {[...departments.entries()].map(([dept, emps]) => (
+            <div key={dept} className="rounded-xl border border-border bg-card shadow-sm">
+              <div className="px-4 py-3 border-b border-border bg-muted/50 rounded-t-xl">
+                <h3 className="font-semibold text-sm">🏢 {dept}</h3>
+              </div>
+              <div className="p-4">
+                {buildTree(emps)}
+              </div>
+            </div>
+          ))}
+          {departments.size === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              <span className="text-3xl block mb-2">👥</span>
+              <p className="text-sm">No employees found</p>
+            </div>
           )}
-          <h2 className="text-lg font-semibold">
-            {viewMode === 'org' ? 'Organization Tree' : 'Agent Overview'}
-          </h2>
         </div>
-
-        {orgLoading ? (
-          <div className="space-y-3">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-20 w-full" />
+      ) : (
+        /* AGENT VIEW */
+        <div className="space-y-4">
+          {(employees || [])
+            .filter(emp => emp.agents.length > 0)
+            .map(emp => (
+              <div key={emp.employeeId} className="rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow">
+                <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">👤</span>
+                    <span className="font-semibold text-sm">{emp.name}</span>
+                    <span className="text-xs text-muted-foreground">({emp.department?.name})</span>
+                  </div>
+                  <span className="text-xs font-medium">Total: ${Number(emp.totalCost).toFixed(2)}</span>
+                </div>
+                <div className="p-4">
+                  <AgentTree
+                    agents={emp.agents.map(a => ({ id: a.id, name: a.name, status: a.status, totalCost: a.totalCost }))}
+                    onAgentClick={(agent) => openPanel(agent.name, agent.id, null, agent.status)}
+                  />
+                </div>
+              </div>
             ))}
-          </div>
-        ) : tree.length > 0 ? (
-          <div className="space-y-1">
-            {tree.map((root) => renderEmployeeNode(root))}
-          </div>
-        ) : (
-          <Card className="p-8 text-center text-muted-foreground">
-            <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>No organization data available</p>
-          </Card>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Recent Traces */}
       <div>
-        <h2 className="text-lg font-semibold mb-3">Recent Traces</h2>
+        <h3 className="font-semibold text-sm mb-3">📋 Recent Traces</h3>
         {tracesLoading ? (
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-20 w-full" />
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-xl" />
             ))}
           </div>
-        ) : tracesData && tracesData.length > 0 ? (
-          <div className="space-y-3">
-            {tracesData.map((trace: any) => (
-              <Card key={trace.id} className="p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm mb-2 line-clamp-2">
-                      📋 {trace.instruction}
-                    </p>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-                      <Badge
-                        variant={
-                          trace.status === 'completed'
-                            ? 'default'
-                            : trace.status === 'failed'
-                            ? 'destructive'
-                            : 'secondary'
-                        }
-                      >
-                        {trace.status === 'completed' ? '✅' : trace.status === 'running' ? '🔄' : '❌'} {trace.status}
-                      </Badge>
-                      {trace.startedAt && trace.completedAt && (
-                        <span>
-                          ⏱️ {Math.round((new Date(trace.completedAt).getTime() - new Date(trace.startedAt).getTime()) / 60000)}min
-                        </span>
-                      )}
-                      {trace.totalCost !== undefined && (
-                        <span>💰 ${Number(trace.totalCost).toFixed(2)}</span>
-                      )}
-                      {trace.agentsUsed !== undefined && (
-                        <span>🤖 {trace.agentsUsed} agents</span>
-                      )}
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => router.push(`/dashboard/agent-trace/trace/${trace.id}`)}
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    View
-                  </Button>
-                </div>
-              </Card>
-            ))}
+        ) : !traces?.length ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <span className="text-2xl block mb-1">📋</span>
+            <p className="text-sm">No traces found</p>
           </div>
         ) : (
-          <Card className="p-8 text-center text-muted-foreground">
-            <p>No traces yet</p>
-          </Card>
+          <div className="space-y-2">
+            {traces.map(trace => {
+              const duration = trace.completedAt
+                ? Math.round((new Date(trace.completedAt).getTime() - new Date(trace.startedAt).getTime()) / 1000)
+                : null;
+              const statusIcon = trace.status === 'completed' ? '✅' : trace.status === 'running' ? '🔄' : '❌';
+              return (
+                <div
+                  key={trace.id}
+                  className="rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow p-4 flex items-center justify-between"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span>{statusIcon}</span>
+                      <p className="text-sm font-medium truncate">{trace.instruction}</p>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                      <span>🤖 {trace.masterAgent?.name}</span>
+                      {duration !== null && <span>⏱ {Math.floor(duration / 60)}m{duration % 60}s</span>}
+                      <span>💰 ${Number(trace.totalCost).toFixed(2)}</span>
+                      <span>👥 {trace.agentsUsed} agents</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => router.push(`/dashboard/agent-trace/trace/${trace.id}`)}
+                    className="ml-3 px-3 py-1.5 text-xs font-medium rounded-lg border border-border hover:bg-muted transition-colors"
+                  >
+                    View →
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 
-      {/* Agent Detail Panel */}
+      {/* Detail Panel */}
       <AgentDetailPanel
-        agentId={selectedAgentId}
-        agentName={selectedAgent?.name}
-        agentEmoji={selectedAgent?.emoji}
-        model={selectedAgent?.model}
-        ownerName={selectedAgent?.ownerName}
-        status={selectedAgent?.status}
-        onClose={() => {
-          setSelectedAgentId(null);
-          setSelectedAgent(null);
-        }}
+        open={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        agentName={selectedAgent.name}
+        agentId={selectedAgent.id}
+        sessionId={selectedAgent.sessionId}
+        status={selectedAgent.status}
       />
     </div>
   );

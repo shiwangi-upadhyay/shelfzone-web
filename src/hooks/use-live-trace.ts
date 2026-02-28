@@ -1,54 +1,28 @@
-import { useEffect, useState } from 'react';
-import { useAuthStore } from '@/stores/auth-store';
-import { SessionEvent } from './use-session-events';
+'use client';
 
-export function useLiveTrace(traceId: string) {
-  const [events, setEvents] = useState<SessionEvent[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const token = useAuthStore((state) => state.accessToken);
+import { useEffect, useRef, useState } from 'react';
+
+export function useLiveTrace(traceId: string | null, enabled = false) {
+  const [events, setEvents] = useState<unknown[]>([]);
+  const esRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    if (!traceId || !token) return;
+    if (!traceId || !enabled) return;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const es = new EventSource(`${apiUrl}/api/traces/${traceId}/stream`);
+    esRef.current = es;
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    const eventSource = new EventSource(
-      `${apiUrl}/api/traces/${traceId}/live?token=${token}`
-    );
-
-    eventSource.onopen = () => {
-      setIsConnected(true);
-      setError(null);
-    };
-
-    eventSource.onmessage = (event) => {
+    es.onmessage = (e) => {
       try {
-        const newEvent = JSON.parse(event.data) as SessionEvent;
-        setEvents((prev) => [...prev, newEvent]);
-      } catch (err) {
-        console.error('Failed to parse SSE event:', err);
-      }
+        const data = JSON.parse(e.data);
+        setEvents(prev => [...prev, data]);
+      } catch {}
     };
 
-    eventSource.onerror = (err) => {
-      console.error('SSE error:', err);
-      setIsConnected(false);
-      setError('Connection lost');
-      eventSource.close();
-    };
+    es.onerror = () => { es.close(); };
 
-    return () => {
-      eventSource.close();
-      setIsConnected(false);
-    };
-  }, [traceId, token]);
+    return () => { es.close(); };
+  }, [traceId, enabled]);
 
-  const clearEvents = () => setEvents([]);
-
-  return {
-    events,
-    isConnected,
-    error,
-    clearEvents,
-  };
+  return { events };
 }
