@@ -30,7 +30,7 @@ export function AgentSidebar({ selectedAgentId, onSelectAgent }: AgentSidebarPro
   const { data, isLoading } = useQuery({
     queryKey: ['agents'],
     queryFn: async () => {
-      const res = await api.get<{ data: Agent[] }>('/api/agents');
+      const res = await api.get<{ data: Agent[] }>('/api/agent-portal/agents');
       return res.data;
     },
   });
