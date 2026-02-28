@@ -46,7 +46,7 @@ export default function DepartmentsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['departments'],
-    queryFn: () => api.get<{ departments: Department[] }>('/api/departments'),
+    queryFn: () => api.get<any>('/api/departments'),
   });
 
   const createMutation = useMutation({
@@ -95,7 +95,7 @@ export default function DepartmentsPage() {
     }
   };
 
-  const departments = data?.departments || [];
+  const departments = data?.data || [];
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
@@ -157,7 +157,7 @@ export default function DepartmentsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {departments.map((dept) => (
+                {departments.map((dept: any) => (
                   <TableRow key={dept.id}>
                     <TableCell className="font-medium">{dept.name}</TableCell>
                     <TableCell className="text-muted-foreground">{dept.description || '—'}</TableCell>

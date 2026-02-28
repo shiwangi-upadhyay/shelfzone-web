@@ -45,7 +45,7 @@ export default function TeamsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['agent-teams'],
-    queryFn: () => api.get<{ teams: Team[] }>('/api/agent-portal/teams'),
+    queryFn: () => api.get<any>('/api/agent-portal/teams'),
   });
 
   const createMutation = useMutation({
@@ -66,7 +66,7 @@ export default function TeamsPage() {
     createMutation.mutate({ name, description: description || undefined });
   };
 
-  const teams = data?.teams || [];
+  const teams = data?.data || [];
 
   return (
     <div className="space-y-6">
@@ -127,7 +127,7 @@ export default function TeamsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {teams.map((team) => (
+                {teams.map((team: any) => (
                   <TableRow key={team.id}>
                     <TableCell className="font-medium">{team.name}</TableCell>
                     <TableCell className="text-muted-foreground">{team.description || '—'}</TableCell>

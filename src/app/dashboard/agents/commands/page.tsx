@@ -31,10 +31,10 @@ interface Command {
 export default function CommandsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['agent-commands'],
-    queryFn: () => api.get<{ commands: Command[] }>('/api/agent-portal/commands'),
+    queryFn: () => api.get<any>('/api/agent-portal/commands'),
   });
 
-  const commands = data?.commands || [];
+  const commands = data?.data || [];
 
   return (
     <div className="space-y-6">
@@ -74,7 +74,7 @@ export default function CommandsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {commands.map((cmd) => (
+                {commands.map((cmd: any) => (
                   <TableRow key={cmd.id}>
                     <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                       {formatDistanceToNow(new Date(cmd.createdAt), { addSuffix: true })}
