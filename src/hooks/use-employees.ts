@@ -53,7 +53,7 @@ export function useEmployees(filters?: EmployeeFilters) {
         ? `?${new URLSearchParams(filters as any).toString()}`
         : '';
       const response = await api.get<any>(`/api/employees${queryString}`);
-      return response.data;
+      return response;
     },
   });
 }
