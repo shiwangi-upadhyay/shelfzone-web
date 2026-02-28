@@ -13,7 +13,10 @@ export type EventType =
   | 'agent:error'
   | 'agent:fix'
   | 'agent:completion'
+  | 'agent:message'
+  | 'agent:tool_result'
   | 'cost:update'
+  | 'trace:started'
   | 'trace:completed';
 
 export interface TraceEvent {
@@ -112,8 +115,31 @@ export function useTraceStream(traceId: string | null) {
 
     es.onmessage = (e) => {
       try {
-        const event: TraceEvent = JSON.parse(e.data);
-        event.id = event.id || Math.random().toString(36).slice(2) + Date.now().toString(36);
+        const raw = JSON.parse(e.data);
+        // Backend sends { id, type, content, timestamp, fromAgent, toAgent, metadata, ... }
+        // Map to TraceEvent shape expected by the UI
+        const event: TraceEvent = {
+          id: raw.id || Math.random().toString(36).slice(2) + Date.now().toString(36),
+          type: raw.type,
+          timestamp: raw.timestamp,
+          data: {
+            // Map backend fields to what UI components expect
+            text: raw.content,
+            content: raw.content,
+            message: raw.content,
+            result: raw.content,
+            description: raw.content,
+            fromAgent: raw.fromAgent,
+            toAgent: raw.toAgent,
+            agentName: raw.toAgent?.name || raw.fromAgent?.name || 'Agent',
+            agentEmoji: '🤖',
+            tokenCount: raw.tokenCount,
+            cost: raw.cost,
+            durationMs: raw.durationMs,
+            toolName: raw.metadata?.tool,
+            ...(raw.metadata || {}),
+          },
+        };
 
         if (event.type === 'cost:update') {
           setTotalCost(Number(event.data.totalCost) || 0);
