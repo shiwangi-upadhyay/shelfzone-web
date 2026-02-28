@@ -24,8 +24,8 @@ export function AgentMap() {
     name: '', id: null, sessionId: null,
   });
 
-  const { data: employees, isLoading: empLoading } = useOrgAgentOverview();
-  const { data: traces, isLoading: tracesLoading } = useTraces({
+  const { data: employees, isLoading: empLoading, error: empError } = useOrgAgentOverview();
+  const { data: traces, isLoading: tracesLoading, error: tracesError } = useTraces({
     status: statusFilter === 'all' ? undefined : statusFilter,
     search: search || undefined,
     limit: 10,
@@ -112,6 +112,9 @@ export function AgentMap() {
             <div className="text-center py-12 text-muted-foreground">
               <span className="text-3xl block mb-2">👥</span>
               <p className="text-sm">No employees found</p>
+              <p className="text-xs mt-2 text-red-400">
+                DEBUG: empLoading={String(empLoading)}, empError={empError?.message || 'none'}, employees={employees ? `array(${employees.length})` : String(employees)}
+              </p>
             </div>
           )}
         </div>
@@ -154,6 +157,9 @@ export function AgentMap() {
           <div className="text-center py-8 text-muted-foreground">
             <span className="text-2xl block mb-1">📋</span>
             <p className="text-sm">No traces found</p>
+              <p className="text-xs mt-2 text-red-400">
+                DEBUG: tracesLoading={String(tracesLoading)}, tracesError={tracesError?.message || 'none'}, traces={traces ? `array(${traces.length})` : String(traces)}
+              </p>
           </div>
         ) : (
           <div className="space-y-2">
