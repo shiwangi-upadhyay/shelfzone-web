@@ -52,7 +52,7 @@ export default function EmployeesPage() {
         </div>
         {canManageEmployees && (
           <Button asChild>
-            <Link href="/employees/new">
+            <Link href="/dashboard/employees/new">
               <Plus className="mr-2 h-4 w-4" />
               Add Employee
             </Link>

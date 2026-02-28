@@ -33,7 +33,7 @@ export default function LeavePage() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/leave/apply">
+          <Link href="/dashboard/leave/apply">
             <Plus className="mr-2 h-4 w-4" />
             Apply Leave
           </Link>

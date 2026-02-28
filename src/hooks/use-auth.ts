@@ -47,7 +47,7 @@ export function useAuth() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
-      router.push('/');
+      router.push('/dashboard');
     },
   });
 

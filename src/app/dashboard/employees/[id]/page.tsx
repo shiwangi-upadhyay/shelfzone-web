@@ -32,7 +32,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
       <div className="text-center py-12">
         <p className="text-muted-foreground">Employee not found</p>
         <Button variant="link" asChild className="mt-4">
-          <Link href="/employees">
+          <Link href="/dashboard/employees">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Employees
           </Link>
@@ -45,7 +45,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <Button variant="ghost" asChild>
-          <Link href="/employees">
+          <Link href="/dashboard/employees">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Link>

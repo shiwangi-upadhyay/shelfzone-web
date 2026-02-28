@@ -13,6 +13,9 @@ import {
   Settings,
   ChevronLeft,
   Menu,
+  Building2,
+  Award,
+  Bell,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -22,37 +25,52 @@ import { Separator } from '@/components/ui/separator';
 const navigation = [
   {
     name: 'Dashboard',
-    href: '/',
+    href: '/dashboard',
     icon: LayoutDashboard,
   },
   {
     name: 'Employees',
-    href: '/employees',
+    href: '/dashboard/employees',
     icon: Users,
   },
   {
+    name: 'Departments',
+    href: '/dashboard/departments',
+    icon: Building2,
+  },
+  {
+    name: 'Designations',
+    href: '/dashboard/designations',
+    icon: Award,
+  },
+  {
     name: 'Attendance',
-    href: '/attendance',
+    href: '/dashboard/attendance',
     icon: Clock,
   },
   {
     name: 'Leave',
-    href: '/leave',
+    href: '/dashboard/leave',
     icon: Calendar,
   },
   {
     name: 'Payroll',
-    href: '/payroll',
+    href: '/dashboard/payroll',
     icon: Wallet,
   },
   {
+    name: 'Notifications',
+    href: '/dashboard/notifications',
+    icon: Bell,
+  },
+  {
     name: 'Reports',
-    href: '/reports',
+    href: '/dashboard/reports',
     icon: BarChart3,
   },
   {
     name: 'Settings',
-    href: '/settings',
+    href: '/dashboard/settings',
     icon: Settings,
   },
 ];
@@ -68,7 +86,7 @@ function SidebarContent({ pathname, collapsed = false, onNavigate }: SidebarCont
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6">
-        <Link href="/" className="flex items-center space-x-2" onClick={onNavigate}>
+        <Link href="/dashboard" className="flex items-center space-x-2" onClick={onNavigate}>
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
             S
           </div>

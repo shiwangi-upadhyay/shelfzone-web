@@ -32,7 +32,7 @@ export default function PayslipDetailPage({ params }: { params: { id: string } }
       <div className="text-center py-12">
         <p className="text-muted-foreground">Payslip not found</p>
         <Button variant="link" asChild className="mt-4">
-          <Link href="/payroll">
+          <Link href="/dashboard/payroll">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Payroll
           </Link>
@@ -45,7 +45,7 @@ export default function PayslipDetailPage({ params }: { params: { id: string } }
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <Button variant="ghost" asChild>
-          <Link href="/payroll">
+          <Link href="/dashboard/payroll">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Link>

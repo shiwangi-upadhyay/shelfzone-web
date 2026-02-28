@@ -29,7 +29,7 @@ export default function NewEmployeePage() {
           </p>
         </div>
         <Button variant="ghost" asChild>
-          <Link href="/employees">
+          <Link href="/dashboard/employees">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Link>

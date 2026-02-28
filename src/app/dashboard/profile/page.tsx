@@ -105,19 +105,19 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent className="space-y-2">
             <Button variant="outline" className="w-full justify-start" asChild>
-              <Link href="/payroll">
+              <Link href="/dashboard/payroll">
                 <FileText className="mr-2 h-4 w-4" />
                 My Payslips
               </Link>
             </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
-              <Link href="/attendance">
+              <Link href="/dashboard/attendance">
                 <Clock className="mr-2 h-4 w-4" />
                 My Attendance
               </Link>
             </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
-              <Link href="/leave">
+              <Link href="/dashboard/leave">
                 <Calendar className="mr-2 h-4 w-4" />
                 My Leaves
               </Link>

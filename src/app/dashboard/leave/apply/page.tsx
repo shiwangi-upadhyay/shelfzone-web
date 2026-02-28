@@ -67,7 +67,7 @@ export default function ApplyLeavePage() {
           </p>
         </div>
         <Button variant="ghost" asChild>
-          <Link href="/leave">
+          <Link href="/dashboard/leave">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Link>
