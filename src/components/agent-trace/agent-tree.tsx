@@ -32,7 +32,7 @@ export function AgentTree({ agents, onAgentClick }: AgentTreeProps) {
         <span className="font-semibold text-sm">{master.name}</span>
         <span className="text-xs text-muted-foreground">(Master)</span>
         <StatusDot status={master.status} />
-        <span className="ml-auto text-xs font-medium">${Number(master.totalCost).toFixed(2)}</span>
+        <span className="ml-auto text-xs font-medium font-mono">${Number(master.totalCost).toFixed(2)}</span>
       </button>
 
       {/* Sub-agents with tree lines */}
@@ -60,7 +60,7 @@ export function AgentTree({ agents, onAgentClick }: AgentTreeProps) {
               <span>{AGENT_EMOJI[agent.name] || '🤖'}</span>
               <span className="font-medium text-sm">{agent.name}</span>
               <StatusDot status={agent.status} />
-              <span className="ml-auto text-xs text-muted-foreground">${Number(agent.totalCost).toFixed(2)}</span>
+              <span className="ml-auto text-xs text-muted-foreground font-mono">${Number(agent.totalCost).toFixed(2)}</span>
             </button>
           </div>
         ))}
