@@ -21,6 +21,7 @@ import {
   DollarSign,
   Terminal,
   TrendingUp,
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -105,6 +106,11 @@ const agentNavigation = [
     name: 'Costs',
     href: '/dashboard/agents/costs',
     icon: Wallet,
+  },
+  {
+    name: 'Agent Trace',
+    href: '/dashboard/agent-trace',
+    icon: Search,
   },
   {
     name: 'Commands',
