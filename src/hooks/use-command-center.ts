@@ -113,7 +113,7 @@ export function useTraceStream(traceId: string | null) {
     es.onmessage = (e) => {
       try {
         const event: TraceEvent = JSON.parse(e.data);
-        event.id = event.id || crypto.randomUUID();
+        event.id = event.id || Math.random().toString(36).slice(2) + Date.now().toString(36);
 
         if (event.type === 'cost:update') {
           setTotalCost(Number(event.data.totalCost) || 0);
@@ -134,7 +134,7 @@ export function useTraceStream(traceId: string | null) {
           setTasks((prev) => [
             ...prev,
             {
-              id: (d.sessionId as string) || crypto.randomUUID(),
+              id: (d.sessionId as string) || Math.random().toString(36).slice(2) + Date.now().toString(36),
               agentEmoji: (d.agentEmoji as string) || '🤖',
               agentName: (d.agentName as string) || 'Agent',
               status: 'running',

@@ -25,7 +25,7 @@ export default function CommandCenterPage() {
 
       // Add user message
       const userMsg: StreamMessage = {
-        id: crypto.randomUUID(),
+        id: Math.random().toString(36).slice(2) + Date.now().toString(36),
         role: 'user',
         content: instruction,
         timestamp: new Date().toISOString(),
