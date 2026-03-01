@@ -1,18 +1,4 @@
 
-> shelfzone-web-temp@0.1.0 dev
-> next dev
-
-⚠ Port 3000 is in use by an unknown process, using available port 3002 instead.
-▲ Next.js 16.1.6 (Turbopack)
-- Local:         http://localhost:3002
-- Network:       http://157.10.98.227:3002
-- Environments: .env.local
-
-✓ Starting...
-⨯ Unable to acquire lock at /root/.openclaw/workspace/shelfzone-web/.next/dev/lock, is another instance of next dev running?
-  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
-[?25h
-
 > shelfzone-web-temp@0.1.0 start
 > next start
 
@@ -21,14 +7,18 @@
 - Network:       http://157.10.98.227:3000
 
 ✓ Starting...
-✓ Ready in 538ms
+✓ Ready in 512ms
 
 > shelfzone-web-temp@0.1.0 start
 > next start
 
-▲ Next.js 16.1.6
-- Local:         http://localhost:3000
-- Network:       http://157.10.98.227:3000
-
-✓ Starting...
-✓ Ready in 581ms
+⨯ Failed to start server
+Error: listen EADDRINUSE: address already in use :::3000
+    at <unknown> (Error: listen EADDRINUSE: address already in use :::3000)
+    at new Promise (<anonymous>) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}

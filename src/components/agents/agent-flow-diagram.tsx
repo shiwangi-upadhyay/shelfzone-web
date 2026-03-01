@@ -1,14 +1,26 @@
 'use client';
 
-import ReactFlow, {
-  Background,
-  Controls,
-  MiniMap,
-  type Node,
-  type Edge,
-  MarkerType,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+import dynamic from 'next/dynamic';
+import { useMemo } from 'react';
+import type { Node, Edge } from 'reactflow';
+import { MarkerType } from 'reactflow';
+
+// Dynamic import to avoid SSR issues
+const ReactFlow = dynamic(
+  () => import('reactflow').then((mod) => mod.default),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[700px] rounded-lg border border-border/60 bg-card flex items-center justify-center">
+        <div className="text-muted-foreground">Loading Flow Diagram...</div>
+      </div>
+    ),
+  }
+);
+
+const Background = dynamic(() => import('reactflow').then((mod) => mod.Background), { ssr: false });
+const Controls = dynamic(() => import('reactflow').then((mod) => mod.Controls), { ssr: false });
+const MiniMap = dynamic(() => import('reactflow').then((mod) => mod.MiniMap), { ssr: false });
 
 interface AgentNodeData {
   emoji: string;
@@ -124,7 +136,7 @@ const agents = [
 
 export function AgentFlowDiagram() {
   // Hierarchical layout: User -> SHIWANGI -> Sub-agents
-  const nodes: Node[] = [
+  const nodes: Node[] = useMemo(() => [
     {
       id: 'user',
       type: 'agent',
@@ -181,9 +193,9 @@ export function AgentFlowDiagram() {
       position: { x: 675, y: 580 },
       data: agents[8],
     },
-  ];
+  ], []);
 
-  const edges: Edge[] = [
+  const edges: Edge[] = useMemo(() => [
     // User -> SHIWANGI
     {
       id: 'user-shiwangi',
@@ -380,7 +392,7 @@ export function AgentFlowDiagram() {
       labelStyle: { fill: '#f59e0b', fontSize: 10, fontWeight: 600 },
       labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 },
     },
-  ];
+  ], []);
 
   return (
     <div className="h-[700px] rounded-lg border border-border/60 bg-card">

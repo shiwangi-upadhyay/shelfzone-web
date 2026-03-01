@@ -1,20 +1,27 @@
 'use client';
 
 import { useMemo, useCallback, useState, useEffect } from 'react';
-import ReactFlow, {
-  Background,
-  Controls,
-  MiniMap,
-  type Node,
-  type Edge,
-  Position,
-  MarkerType,
-  applyNodeChanges,
-  type NodeChange,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+import dynamic from 'next/dynamic';
+import type { Node, Edge, NodeChange } from 'reactflow';
+import { Position, MarkerType, applyNodeChanges as applyNodeChangesBase } from 'reactflow';
 import { type OrgEmployee } from '@/hooks/use-agent-stats';
-import { cn } from '@/lib/utils';
+
+// Dynamic import to avoid SSR issues
+const ReactFlow = dynamic(
+  () => import('reactflow').then((mod) => mod.default),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[600px] rounded-lg border border-border/60 bg-card flex items-center justify-center">
+        <div className="text-muted-foreground">Loading Organization View...</div>
+      </div>
+    ),
+  }
+);
+
+const Background = dynamic(() => import('reactflow').then((mod) => mod.Background), { ssr: false });
+const Controls = dynamic(() => import('reactflow').then((mod) => mod.Controls), { ssr: false });
+const MiniMap = dynamic(() => import('reactflow').then((mod) => mod.MiniMap), { ssr: false });
 
 interface EmployeeNodeData {
   employeeId: string;
@@ -180,6 +187,7 @@ export function OrgTreeView({ employees, departmentFilter }: OrgTreeViewProps) {
       });
 
       // Create edge from parent (only if parent is also visible)
+      // ENHANCED: Super visible purple lines!
       if (parentId && nodesMap.has(parentId)) {
         edgesArr.push({
           id: `${parentId}-${nodeId}`,
@@ -187,15 +195,14 @@ export function OrgTreeView({ employees, departmentFilter }: OrgTreeViewProps) {
           target: nodeId,
           type: 'smoothstep',
           style: { 
-            stroke: '#8b5cf6',  // Bright purple - highly visible
-            strokeWidth: 3,      // Thick line
-            strokeDasharray: '5,5' 
+            stroke: '#8b5cf6',      // Bright purple
+            strokeWidth: 4,          // THICKER line
           },
           markerEnd: { 
             type: MarkerType.ArrowClosed, 
-            color: '#8b5cf6', 
-            width: 20, 
-            height: 20 
+            color: '#8b5cf6',       // Matching purple arrow
+            width: 24,              // Larger arrow
+            height: 24 
           },
           animated: false,
         });
@@ -249,7 +256,7 @@ export function OrgTreeView({ employees, departmentFilter }: OrgTreeViewProps) {
   // Handle node changes (for dragging)
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      setNodes((nds) => applyNodeChanges(changes, nds));
+      setNodes((nds) => applyNodeChangesBase(changes, nds));
     },
     []
   );
