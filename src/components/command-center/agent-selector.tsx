@@ -3,10 +3,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { Bot, CheckSquare, Square } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 
 interface Agent {
   id: string;
@@ -18,10 +16,8 @@ interface Agent {
 }
 
 interface AgentSelectorProps {
-  selectedAgentIds: string[];
-  onSelectAgents: (ids: string[]) => void;
-  executionMode: 'delegate' | 'parallel' | 'sequential';
-  onModeChange: (mode: 'delegate' | 'parallel' | 'sequential') => void;
+  selectedAgentId: string | null;
+  onSelectAgent: (id: string) => void;
 }
 
 const statusColor: Record<string, string> = {
@@ -31,10 +27,8 @@ const statusColor: Record<string, string> = {
 };
 
 export function AgentSelector({ 
-  selectedAgentIds, 
-  onSelectAgents,
-  executionMode,
-  onModeChange 
+  selectedAgentId, 
+  onSelectAgent
 }: AgentSelectorProps) {
   const { data, isLoading } = useQuery({
     queryKey: ['agents'],
@@ -45,103 +39,70 @@ export function AgentSelector({
   });
 
   const agents = data ?? [];
-  const masterAgent = agents.find(a => a.isMaster);
-
-  const toggleAgent = (id: string) => {
-    if (executionMode === 'delegate') {
-      // In delegate mode, only allow selecting master agent
-      onSelectAgents(masterAgent?.id === id ? [id] : []);
-    } else {
-      // In parallel/sequential mode, allow multiple selections
-      if (selectedAgentIds.includes(id)) {
-        onSelectAgents(selectedAgentIds.filter(aid => aid !== id));
-      } else {
-        onSelectAgents([...selectedAgentIds, id]);
-      }
-    }
-  };
 
   return (
-    <div className="flex h-full w-[280px] flex-col border-r bg-card">
-      <div className="flex h-12 items-center border-b px-4">
+    <div className="flex h-full w-[260px] flex-col border-r bg-card/50">
+      {/* Header */}
+      <div className="flex h-14 items-center border-b px-4">
         <Bot className="mr-2 h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-semibold">Select Agents</span>
+        <span className="text-sm font-semibold">Agents</span>
       </div>
 
-      {/* Execution Mode Selector */}
-      <div className="border-b p-3 space-y-2">
-        <Label className="text-xs font-semibold text-muted-foreground uppercase">Mode</Label>
-        <div className="space-y-1">
-          <Button
-            variant={executionMode === 'delegate' ? 'default' : 'ghost'}
-            size="sm"
-            className="w-full justify-start text-xs h-8"
-            onClick={() => onModeChange('delegate')}
-          >
-            Let SHIWANGI delegate
-          </Button>
-          <Button
-            variant={executionMode === 'parallel' ? 'default' : 'ghost'}
-            size="sm"
-            className="w-full justify-start text-xs h-8"
-            onClick={() => onModeChange('parallel')}
-          >
-            Send to all (parallel)
-          </Button>
-          <Button
-            variant={executionMode === 'sequential' ? 'default' : 'ghost'}
-            size="sm"
-            className="w-full justify-start text-xs h-8"
-            onClick={() => onModeChange('sequential')}
-          >
-            Sequential execution
-          </Button>
-        </div>
-      </div>
-
+      {/* Agent List */}
       <ScrollArea className="flex-1">
-        <div className="space-y-0.5 p-2">
+        <div className="p-2 space-y-1">
           {isLoading &&
-            Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-14 animate-pulse rounded-lg bg-muted" />
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-16 animate-pulse rounded-lg bg-muted/50" />
             ))}
           
           {agents.map((agent) => {
-            const isSelected = selectedAgentIds.includes(agent.id);
-            const isDisabled = executionMode === 'delegate' && !agent.isMaster;
+            const isSelected = selectedAgentId === agent.id;
             
             return (
               <button
                 key={agent.id}
-                onClick={() => !isDisabled && toggleAgent(agent.id)}
-                disabled={isDisabled}
+                onClick={() => onSelectAgent(agent.id)}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors',
+                  'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-all',
                   isSelected
-                    ? 'bg-indigo-600/10 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400'
-                    : 'text-muted-foreground hover:bg-accent',
-                  isDisabled && 'opacity-40 cursor-not-allowed'
+                    ? 'bg-indigo-600/10 shadow-sm ring-1 ring-indigo-600/20'
+                    : 'hover:bg-accent/50'
                 )}
               >
-                {/* Checkbox */}
-                {isSelected ? (
-                  <CheckSquare className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                ) : (
-                  <Square className="h-4 w-4 text-muted-foreground shrink-0" />
-                )}
+                {/* Avatar */}
+                <div className={cn(
+                  'flex h-10 w-10 items-center justify-center rounded-full text-lg shrink-0',
+                  isSelected 
+                    ? 'bg-indigo-600/20' 
+                    : 'bg-muted'
+                )}>
+                  {agent.emoji || '🤖'}
+                </div>
                 
-                <span className="text-lg">{agent.emoji || '🤖'}</span>
-                <div className="flex-1 truncate">
+                {/* Info */}
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium truncate">{agent.name}</span>
+                    <span className={cn(
+                      'font-medium truncate text-sm',
+                      isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-foreground'
+                    )}>
+                      {agent.name}
+                    </span>
                     {agent.isMaster && (
-                      <span className="text-[10px] font-bold uppercase text-indigo-500">master</span>
+                      <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
+                        master
+                      </span>
                     )}
                   </div>
                   {agent.model && (
-                    <p className="text-xs text-muted-foreground font-mono truncate">{agent.model}</p>
+                    <p className="text-[11px] text-muted-foreground font-mono truncate mt-0.5">
+                      {agent.model}
+                    </p>
                   )}
                 </div>
+                
+                {/* Status Dot */}
                 <span
                   className={cn(
                     'h-2 w-2 shrink-0 rounded-full',
@@ -153,16 +114,12 @@ export function AgentSelector({
           })}
           
           {!isLoading && agents.length === 0 && (
-            <p className="px-3 py-6 text-center text-xs text-muted-foreground">No agents found</p>
+            <div className="px-3 py-12 text-center">
+              <p className="text-sm text-muted-foreground">No agents available</p>
+            </div>
           )}
         </div>
       </ScrollArea>
-
-      {executionMode === 'delegate' && masterAgent && (
-        <div className="border-t bg-muted/30 p-2 text-[10px] text-muted-foreground">
-          <p>💡 SHIWANGI will decide which sub-agents to delegate to.</p>
-        </div>
-      )}
     </div>
   );
 }
