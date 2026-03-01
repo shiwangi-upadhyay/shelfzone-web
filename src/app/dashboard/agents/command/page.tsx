@@ -28,7 +28,7 @@ export default function CommandCenterPage() {
     sendMessage, 
     isStreaming, 
     currentResponse, 
-    totalCost, 
+    conversationCost, 
     error: streamError,
     stopGenerating 
   } = useSendMessage(selectedAgentId, conversationId);
@@ -144,6 +144,7 @@ export default function CommandCenterPage() {
         messages={messages}
         isStreaming={isStreaming}
         streamingContent={currentResponse}
+        conversationCost={conversationCost}
         onSend={handleSend}
         onStopGenerating={stopGenerating}
         disabled={!selectedAgentId || !hasValidKey}

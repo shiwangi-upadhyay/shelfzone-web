@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -30,11 +30,24 @@ export interface CostData {
   totalCost: number;
 }
 
+export interface ConversationCostData {
+  lastMessage?: CostData;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalCost: number;
+  messageCount: number;
+}
+
 export function useSendMessage(agentId: string | null, conversationId: string | null) {
   const router = useRouter();
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentResponse, setCurrentResponse] = useState('');
-  const [totalCost, setTotalCost] = useState<CostData | null>(null);
+  const [conversationCost, setConversationCost] = useState<ConversationCostData>({
+    totalInputTokens: 0,
+    totalOutputTokens: 0,
+    totalCost: 0,
+    messageCount: 0,
+  });
   const [error, setError] = useState<string | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -59,7 +72,6 @@ export function useSendMessage(agentId: string | null, conversationId: string | 
 
       // Reset state
       setCurrentResponse('');
-      setTotalCost(null);
       setError(null);
       setIsStreaming(true);
 
@@ -164,12 +176,20 @@ export function useSendMessage(agentId: string | null, conversationId: string | 
                     // chunk event
                     setCurrentResponse((prev) => prev + data.text);
                   } else if (data.inputTokens !== undefined && data.outputTokens !== undefined) {
-                    // cost event
-                    setTotalCost({
+                    // cost event - accumulate in conversation cost
+                    const lastMessageCost: CostData = {
                       inputTokens: data.inputTokens,
                       outputTokens: data.outputTokens,
                       totalCost: data.totalCost,
-                    });
+                    };
+                    
+                    setConversationCost((prev) => ({
+                      lastMessage: lastMessageCost,
+                      totalInputTokens: prev.totalInputTokens + data.inputTokens,
+                      totalOutputTokens: prev.totalOutputTokens + data.outputTokens,
+                      totalCost: prev.totalCost + data.totalCost,
+                      messageCount: prev.messageCount + 1,
+                    }));
                   } else if (data.error) {
                     // error event
                     setError(data.error);
@@ -221,11 +241,21 @@ export function useSendMessage(agentId: string | null, conversationId: string | 
     [agentId, conversationId, router, stopGenerating]
   );
 
+  // Reset conversation cost when conversation changes
+  useEffect(() => {
+    setConversationCost({
+      totalInputTokens: 0,
+      totalOutputTokens: 0,
+      totalCost: 0,
+      messageCount: 0,
+    });
+  }, [conversationId]);
+
   return {
     sendMessage,
     isStreaming,
     currentResponse,
-    totalCost,
+    conversationCost,
     error,
     stopGenerating,
   };

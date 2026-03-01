@@ -7,12 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { MarkdownRenderer } from './markdown-renderer';
+import { CostDisplay, ConversationCostData } from './cost-display';
 
 interface ChatInterfaceProps {
   selectedAgentId: string | null;
   messages: Array<{ id: string; role: 'user' | 'assistant'; content: string; timestamp: string }>;
   isStreaming: boolean;
   streamingContent: string;
+  conversationCost: ConversationCostData | null;
   onSend: (message: string) => void;
   onStopGenerating: () => void;
   disabled?: boolean;
@@ -25,69 +28,7 @@ interface Agent {
   emoji?: string;
 }
 
-// Simple markdown-ish rendering
-function formatContent(content: string) {
-  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-  let parts: any[] = [];
-  let lastIndex = 0;
-  let match;
 
-  while ((match = codeBlockRegex.exec(content)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push({ type: 'text', content: content.slice(lastIndex, match.index) });
-    }
-    parts.push({ type: 'code', lang: match[1] || '', content: match[2] });
-    lastIndex = match.index + match[0].length;
-  }
-
-  if (lastIndex < content.length) {
-    parts.push({ type: 'text', content: content.slice(lastIndex) });
-  }
-
-  if (parts.length === 0) {
-    parts = [{ type: 'text', content }];
-  }
-
-  return (
-    <div className="space-y-2">
-      {parts.map((part, i) => {
-        if (part.type === 'code') {
-          return (
-            <pre key={i} className="rounded-lg bg-slate-900 dark:bg-slate-950 p-3 overflow-x-auto">
-              <code className="text-xs font-mono text-slate-100">
-                {part.content}
-              </code>
-            </pre>
-          );
-        }
-        
-        const lines = part.content.split('\n');
-        return (
-          <div key={i} className="space-y-1">
-            {lines.map((line: string, li: number) => {
-              line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-              line = line.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-xs font-mono">$1</code>');
-              const isList = line.match(/^[\-\*]\s/);
-              
-              if (isList) {
-                return (
-                  <div key={li} className="flex gap-2">
-                    <span>•</span>
-                    <span dangerouslySetInnerHTML={{ __html: line.replace(/^[\-\*]\s/, '') }} />
-                  </div>
-                );
-              }
-              
-              return line.trim() ? (
-                <p key={li} dangerouslySetInnerHTML={{ __html: line }} />
-              ) : null;
-            })}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 function UserMessage({ content, timestamp }: { content: string; timestamp: string }) {
   return (
@@ -137,7 +78,7 @@ function AgentMessage({
         </div>
         <div className="rounded-2xl rounded-tl-md bg-slate-100 dark:bg-slate-900 px-4 py-2.5 shadow-sm">
           <div className="text-[15px] leading-relaxed text-foreground">
-            {formatContent(content)}
+            <MarkdownRenderer content={content} />
             {isStreaming && <span className="inline-block w-1.5 h-4 bg-foreground ml-1 animate-pulse" />}
           </div>
         </div>
@@ -170,6 +111,7 @@ export function ChatInterface({
   messages,
   isStreaming,
   streamingContent,
+  conversationCost,
   onSend,
   onStopGenerating,
   disabled,
@@ -221,6 +163,16 @@ export function ChatInterface({
 
   return (
     <div className="flex flex-1 flex-col min-w-0 bg-background">
+      {/* Cost Display - Fixed at top */}
+      {conversationCost && conversationCost.totalCost > 0 && (
+        <div className="border-b bg-card/50 px-6 py-2.5 flex items-center justify-between">
+          <div className="text-xs text-muted-foreground">
+            💬 Conversation Cost
+          </div>
+          <CostDisplay conversationCost={conversationCost} />
+        </div>
+      )}
+      
       {/* Message stream */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl space-y-6 p-6 pb-8">
