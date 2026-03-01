@@ -16,6 +16,7 @@ interface ChatPanelProps {
   isLoading: boolean;
   onSend: (instruction: string) => void;
   disabled?: boolean;
+  completionsBySession?: Record<string, TraceEvent>;
 }
 
 export function ChatPanel({
@@ -26,9 +27,27 @@ export function ChatPanel({
   isLoading,
   onSend,
   disabled,
+  completionsBySession = {},
 }: ChatPanelProps) {
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Filter out completion events that will be nested under delegation cards
+  const delegationSessionIds = new Set(
+    events
+      .filter((e) => e.type === 'agent:delegation')
+      .map((e) => e.data.sessionId as string)
+      .filter(Boolean)
+  );
+  
+  const displayEvents = events.filter((event) => {
+    // Hide completion events that belong to a delegation (they'll be nested)
+    if (event.type === 'agent:completion') {
+      const sessionId = event.data.sessionId as string;
+      return !delegationSessionIds.has(sessionId);
+    }
+    return true;
+  });
 
   // Auto-scroll on new messages/events
   useEffect(() => {
@@ -87,8 +106,8 @@ export function ChatPanel({
               <UserBubble key={msg.id} content={msg.content!} timestamp={msg.timestamp} />
             ) : null
           )}
-          {events.map((event) => (
-            <EventCard key={event.id} event={event} />
+          {displayEvents.map((event) => (
+            <EventCard key={event.id} event={event} completionsBySession={completionsBySession} />
           ))}
           {isCompleted && (
             <div className="animate-in slide-in-from-bottom-2 duration-500 rounded-xl border-2 border-emerald-400 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 text-center">

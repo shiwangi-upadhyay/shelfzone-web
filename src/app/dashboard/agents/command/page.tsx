@@ -21,7 +21,7 @@ export default function CommandCenterPage() {
 
   const { data: keyStatus, isLoading: keyLoading } = useApiKeyStatus();
   const instruct = useInstruct(selectedAgentId);
-  const { events, totalCost, isCompleted, tasks, reset } = useTraceStream(traceId);
+  const { events, totalCost, isCompleted, tasks, completionsBySession, reset } = useTraceStream(traceId);
 
   const hasValidKey = keyStatus?.hasKey && keyStatus?.isValid;
 
@@ -106,6 +106,7 @@ export default function CommandCenterPage() {
         isLoading={instruct.isPending || (!!traceId && !isCompleted)}
         onSend={handleSend}
         disabled={!selectedAgentId || !!apiKeyError}
+        completionsBySession={completionsBySession}
       />
 
       <TaskBoard tasks={tasks} />

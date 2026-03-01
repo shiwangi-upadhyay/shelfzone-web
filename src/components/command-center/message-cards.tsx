@@ -58,8 +58,10 @@ export function ThinkingCard({ event }: { event: TraceEvent }) {
 }
 
 // ---- Delegation card ----
-export function DelegationCard({ event }: { event: TraceEvent }) {
+export function DelegationCard({ event, completion }: { event: TraceEvent; completion?: TraceEvent }) {
   const d = event.data;
+  const sessionId = d.sessionId as string;
+  
   return (
     <div className="animate-in slide-in-from-bottom-2 duration-300 rounded-lg border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/30 px-3 py-2.5">
       <div className="flex items-center gap-2 text-sm">
@@ -74,6 +76,28 @@ export function DelegationCard({ event }: { event: TraceEvent }) {
         <p className="mt-1.5 text-xs text-purple-700 dark:text-purple-300 font-mono pl-6">
           {d.instruction}
         </p>
+      )}
+      
+      {/* Nested completion response */}
+      {completion && (
+        <div className="mt-3 ml-6 rounded-lg border border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2.5">
+          <div className="flex items-center gap-2 text-sm">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <span className="font-semibold text-emerald-800 dark:text-emerald-300">Response</span>
+          </div>
+          <p className="mt-1.5 text-xs text-emerald-700 dark:text-emerald-200 whitespace-pre-wrap">
+            {(completion.data.content as string) || 
+             (completion.data.result as string) || 
+             (completion.data.message as string) || 
+             'Task completed.'}
+          </p>
+          {Boolean(completion.data.cost || completion.data.tokenCount) && (
+            <div className="mt-1.5 flex gap-3 text-[10px] font-mono text-emerald-600 dark:text-emerald-400">
+              {completion.data.tokenCount ? <span>{String(completion.data.tokenCount)} tokens</span> : null}
+              {completion.data.cost ? <span>Cost: ${Number(completion.data.cost).toFixed(4)}</span> : null}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -191,12 +215,21 @@ export function AgentMessageCard({ event }: { event: TraceEvent }) {
 }
 
 // ---- Render event by type ----
-export function EventCard({ event }: { event: TraceEvent }) {
+export function EventCard({ 
+  event, 
+  completionsBySession = {} 
+}: { 
+  event: TraceEvent; 
+  completionsBySession?: Record<string, TraceEvent>;
+}) {
   switch (event.type) {
     case 'agent:thinking':
       return <ThinkingCard event={event} />;
-    case 'agent:delegation':
-      return <DelegationCard event={event} />;
+    case 'agent:delegation': {
+      const sessionId = event.data.sessionId as string;
+      const completion = sessionId ? completionsBySession[sessionId] : undefined;
+      return <DelegationCard event={event} completion={completion} />;
+    }
     case 'agent:tool_call':
       return <ToolCallCard event={event} />;
     case 'agent:error':

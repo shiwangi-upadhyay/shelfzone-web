@@ -88,6 +88,7 @@ export function useTraceStream(traceId: string | null) {
   const [totalCost, setTotalCost] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [tasks, setTasks] = useState<TaskNode[]>([]);
+  const [completionsBySession, setCompletionsBySession] = useState<Record<string, TraceEvent>>({});
   const esRef = useRef<EventSource | null>(null);
 
   const reset = useCallback(() => {
@@ -95,6 +96,7 @@ export function useTraceStream(traceId: string | null) {
     setTotalCost(0);
     setIsCompleted(false);
     setTasks([]);
+    setCompletionsBySession({});
   }, []);
 
   useEffect(() => {
@@ -174,9 +176,19 @@ export function useTraceStream(traceId: string | null) {
 
         if (event.type === 'agent:completion') {
           const d = event.data as Record<string, unknown>;
+          const sessionId = d.sessionId as string;
+          
+          // Track completion by sessionId for nested display
+          if (sessionId) {
+            setCompletionsBySession((prev) => ({
+              ...prev,
+              [sessionId]: event,
+            }));
+          }
+          
           setTasks((prev) =>
             prev.map((t) =>
-              t.id === d.sessionId
+              t.id === sessionId
                 ? { ...t, status: 'done' as const, completedAt: event.timestamp, cost: Number(d.cost) || 0 }
                 : t
             )
@@ -205,7 +217,7 @@ export function useTraceStream(traceId: string | null) {
     };
   }, [traceId]);
 
-  return { events, totalCost, isCompleted, tasks, reset };
+  return { events, totalCost, isCompleted, tasks, completionsBySession, reset };
 }
 
 // ---------- useTraceStatus ----------
