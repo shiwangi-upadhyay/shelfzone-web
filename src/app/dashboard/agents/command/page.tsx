@@ -35,10 +35,11 @@ export default function CommandCenterPage() {
   
   const { 
     sendMessage, 
-    isLoading, 
-    response, 
-    conversationCost, 
-    error: streamError
+    isStreaming, 
+    currentResponse, 
+    totalCost,
+    error: streamError,
+    stopGenerating
   } = useSendMessage(selectedAgentId, conversationId);
 
   const hasValidKey = keyStatus?.hasKey && keyStatus?.isValid;
@@ -78,27 +79,31 @@ export default function CommandCenterPage() {
 
   // When response arrives, add assistant message
   useEffect(() => {
-    if (response && messages.length > 0) {
+    if (currentResponse && messages.length > 0 && !isStreaming) {
       const lastMsg = messages[messages.length - 1];
       if (lastMsg.role === 'user') {
-        setMessages(prev => [...prev, {
-          id: Math.random().toString(36),
-          role: 'assistant',
-          content: response,
-          timestamp: new Date().toISOString()
-        }]);
-        
-        // Refetch conversation to get updated messages from DB
-        setTimeout(() => {
-          refetchConversation();
-        }, 500);
+        // Only add if we don't already have an assistant response after this user message
+        const hasAssistantResponse = messages.slice(-1)[0].role === 'assistant';
+        if (!hasAssistantResponse) {
+          setMessages(prev => [...prev, {
+            id: Math.random().toString(36),
+            role: 'assistant',
+            content: currentResponse,
+            timestamp: new Date().toISOString()
+          }]);
+          
+          // Refetch conversation to get updated messages from DB
+          setTimeout(() => {
+            refetchConversation();
+          }, 500);
+        }
       }
     }
-  }, [response, refetchConversation]); // Deliberately not including messages to avoid infinite loop
+  }, [currentResponse, isStreaming, refetchConversation]); // Deliberately not including messages to avoid infinite loop
 
   const handleSend = useCallback(
     async (message: string) => {
-      if (!selectedAgentId || !hasValidKey || isLoading) return;
+      if (!selectedAgentId || !hasValidKey || isStreaming) return;
 
       // Add user message to chat immediately
       const userMsg: Message = {
@@ -112,7 +117,7 @@ export default function CommandCenterPage() {
       // Send message
       await sendMessage(message);
     },
-    [selectedAgentId, hasValidKey, isLoading, sendMessage]
+    [selectedAgentId, hasValidKey, isStreaming, sendMessage]
   );
 
   // Loading state
@@ -179,10 +184,11 @@ export default function CommandCenterPage() {
       <ChatInterface
         selectedAgentId={selectedAgentId}
         messages={messages}
-        isLoading={isLoading || conversationLoading}
-        response={response}
-        conversationCost={conversationCost}
+        isStreaming={isStreaming}
+        streamingContent={currentResponse}
+        totalCost={totalCost}
         onSend={handleSend}
+        onStopGenerating={stopGenerating}
         disabled={!selectedAgentId || !hasValidKey || conversationLoading}
         error={streamError}
       />

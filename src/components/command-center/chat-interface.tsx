@@ -13,10 +13,11 @@ import { CostDisplay, ConversationCostData } from './cost-display';
 interface ChatInterfaceProps {
   selectedAgentId: string | null;
   messages: Array<{ id: string; role: 'user' | 'assistant'; content: string; timestamp: string }>;
-  isLoading: boolean;
-  response: string | null;
-  conversationCost: ConversationCostData | null;
+  isStreaming: boolean;
+  streamingContent: string;
+  totalCost: any;
   onSend: (message: string) => void;
+  onStopGenerating: () => void;
   disabled?: boolean;
   error?: string | null;
 }
@@ -108,10 +109,11 @@ function ThinkingIndicator({ agentName, agentEmoji }: { agentName: string; agent
 export function ChatInterface({
   selectedAgentId,
   messages,
-  isLoading,
-  response,
-  conversationCost,
+  isStreaming,
+  streamingContent,
+  totalCost,
   onSend,
+  onStopGenerating,
   disabled,
   error,
 }: ChatInterfaceProps) {
@@ -131,7 +133,7 @@ export function ChatInterface({
   const agentName = selectedAgent?.name || 'Agent';
   const agentEmoji = selectedAgent?.emoji || '🤖';
 
-  // Auto-scroll on new messages
+  // Auto-scroll on new messages and streaming
   useEffect(() => {
     const el = scrollRef.current;
     if (el) {
@@ -140,12 +142,12 @@ export function ChatInterface({
         el.scrollTop = el.scrollHeight;
       }, 50);
     }
-  }, [messages.length, isLoading]);
+  }, [messages.length, isStreaming, streamingContent]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const text = input.trim();
-    if (!text || isLoading || disabled) return;
+    if (!text || isStreaming || disabled) return;
     onSend(text);
     setInput('');
   };
@@ -160,19 +162,21 @@ export function ChatInterface({
   return (
     <div className="flex flex-1 flex-col min-w-0 bg-background">
       {/* Cost Display - Fixed at top */}
-      {conversationCost && conversationCost.totalCost > 0 && (
+      {totalCost && (
         <div className="border-b bg-card/50 px-6 py-2.5 flex items-center justify-between">
           <div className="text-xs text-muted-foreground">
-            💬 Conversation Cost
+            💬 Last Message Cost
           </div>
-          <CostDisplay conversationCost={conversationCost} />
+          <div className="text-xs font-mono">
+            ${totalCost.totalCost?.toFixed(4) || '0.0000'}
+          </div>
         </div>
       )}
       
       {/* Message stream */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl space-y-6 p-6 pb-8">
-          {messages.length === 0 && !isLoading && (
+          {messages.length === 0 && !isStreaming && (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <div className="text-6xl mb-4">{selectedAgentId ? agentEmoji : '💬'}</div>
               <h3 className="text-xl font-semibold text-foreground">
@@ -202,8 +206,19 @@ export function ChatInterface({
             )
           )}
 
-          {/* Show "Thinking..." while loading */}
-          {isLoading && (
+          {/* Show streaming content while generating */}
+          {isStreaming && streamingContent && (
+            <AgentMessage
+              content={streamingContent}
+              timestamp={new Date().toISOString()}
+              agentName={agentName}
+              agentEmoji={agentEmoji}
+              isStreaming={true}
+            />
+          )}
+
+          {/* Show "Thinking..." while loading but no content yet */}
+          {isStreaming && !streamingContent && (
             <ThinkingIndicator agentName={agentName} agentEmoji={agentEmoji} />
           )}
 
@@ -221,10 +236,21 @@ export function ChatInterface({
       {/* Input area */}
       <div className="border-t bg-card/50">
         {selectedAgentId && (
-          <div className="mx-auto max-w-3xl px-6 pt-2">
+          <div className="mx-auto max-w-3xl px-6 pt-2 flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
               Talking to: <span className="font-semibold text-foreground">{agentName}</span>
             </p>
+            {isStreaming && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onStopGenerating}
+                className="h-7 text-xs"
+              >
+                Stop generating
+              </Button>
+            )}
           </div>
         )}
         <form onSubmit={handleSubmit} className="p-4">
@@ -235,16 +261,16 @@ export function ChatInterface({
               onKeyDown={handleKeyDown}
               placeholder="Type your message..."
               className="min-h-[56px] max-h-40 resize-none text-[15px] shadow-sm"
-              disabled={disabled || isLoading}
+              disabled={disabled || isStreaming}
               rows={1}
             />
             <Button
               type="submit"
               size="icon"
-              disabled={!input.trim() || disabled || isLoading}
+              disabled={!input.trim() || disabled || isStreaming}
               className="h-[56px] w-[56px] shrink-0 shadow-sm"
             >
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+              {isStreaming ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
             </Button>
           </div>
           <p className="mx-auto max-w-3xl mt-2 text-[11px] text-muted-foreground text-center">
