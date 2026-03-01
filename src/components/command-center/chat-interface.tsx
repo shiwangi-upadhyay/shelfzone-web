@@ -245,7 +245,7 @@ export function ChatInterface({
       <div className="flex h-10 items-center justify-between border-b px-4 bg-card">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono">
           <DollarSign className="h-3.5 w-3.5" />
-          <span>Cost: ${totalCost.toFixed(4)}</span>
+          <span>Cost: ${(Number(totalCost) || 0).toFixed(4)}</span>
         </div>
         {isCompleted && (
           <span className="rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">

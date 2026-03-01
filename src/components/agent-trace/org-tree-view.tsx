@@ -4,6 +4,7 @@ import { useMemo, useCallback, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import type { Node, Edge, NodeChange } from 'reactflow';
 import { Position, MarkerType, applyNodeChanges as applyNodeChangesBase } from 'reactflow';
+import 'reactflow/dist/style.css';
 import { type OrgEmployee } from '@/hooks/use-agent-stats';
 
 // Dynamic import to avoid SSR issues

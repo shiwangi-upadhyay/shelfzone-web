@@ -62,24 +62,9 @@ const navigation = [
     icon: Calendar,
   },
   {
-    name: 'Payroll',
-    href: '/dashboard/payroll',
-    icon: Wallet,
-  },
-  {
     name: 'Notifications',
     href: '/dashboard/notifications',
     icon: Bell,
-  },
-  {
-    name: 'Reports',
-    href: '/dashboard/reports',
-    icon: BarChart3,
-  },
-  {
-    name: 'Settings',
-    href: '/dashboard/settings',
-    icon: Settings,
   },
 ];
 
