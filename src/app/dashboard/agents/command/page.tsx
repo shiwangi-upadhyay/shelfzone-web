@@ -8,6 +8,7 @@ import { AgentSelector } from '@/components/command-center/agent-selector';
 import { ChatInterface } from '@/components/command-center/chat-interface';
 import { useSendMessage } from '@/hooks/use-command-center-stream';
 import { useApiKeyStatus } from '@/hooks/use-api-key';
+import { useAgentConversation } from '@/hooks/use-conversations';
 import { ErrorState } from '@/components/ui/error-state';
 
 interface Message {
@@ -21,9 +22,17 @@ export default function CommandCenterPage() {
   const router = useRouter();
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [conversationId] = useState<string | null>(null); // TODO: Step 6 - load from conversations
+  const [conversationId, setConversationId] = useState<string | null>(null);
   
   const { data: keyStatus, isLoading: keyLoading, error: keyError, refetch: refetchKey } = useApiKeyStatus();
+  
+  // Load conversation for selected agent
+  const { 
+    data: conversation, 
+    isLoading: conversationLoading,
+    refetch: refetchConversation 
+  } = useAgentConversation(selectedAgentId);
+  
   const { 
     sendMessage, 
     isStreaming, 
@@ -35,14 +44,40 @@ export default function CommandCenterPage() {
 
   const hasValidKey = keyStatus?.hasKey && keyStatus?.isValid;
 
-  // Reset conversation when switching agents
+  // Load conversation when agent changes
   useEffect(() => {
     if (selectedAgentId) {
+      // Clear messages immediately when switching agents
       setMessages([]);
+      setConversationId(null);
+      
+      // The useAgentConversation hook will fetch the conversation
+      // and the next useEffect will load messages
     }
   }, [selectedAgentId]);
 
-  // When streaming completes, save the assistant message
+  // Load messages from fetched conversation
+  useEffect(() => {
+    if (conversation) {
+      setConversationId(conversation.id);
+      
+      // Map conversation messages to local message format
+      const loadedMessages: Message[] = (conversation.messages || []).map((msg) => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.createdAt,
+      }));
+      
+      setMessages(loadedMessages);
+    } else if (selectedAgentId && !conversationLoading) {
+      // No conversation exists yet, start fresh
+      setMessages([]);
+      setConversationId(null);
+    }
+  }, [conversation, selectedAgentId, conversationLoading]);
+
+  // When streaming completes, save the assistant message and refetch conversation
   useEffect(() => {
     if (!isStreaming && currentResponse && messages.length > 0) {
       // Only add if the last message is from user (streaming just completed)
@@ -55,9 +90,15 @@ export default function CommandCenterPage() {
           timestamp: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, assistantMsg]);
+        
+        // Refetch conversation to get updated messages from DB
+        // (with proper IDs, token counts, costs)
+        setTimeout(() => {
+          refetchConversation();
+        }, 500);
       }
     }
-  }, [isStreaming, currentResponse]); // Deliberately not including messages to avoid infinite loop
+  }, [isStreaming, currentResponse, refetchConversation]); // Deliberately not including messages to avoid infinite loop
 
   const handleSend = useCallback(
     async (message: string) => {
@@ -142,12 +183,12 @@ export default function CommandCenterPage() {
       <ChatInterface
         selectedAgentId={selectedAgentId}
         messages={messages}
-        isStreaming={isStreaming}
+        isStreaming={isStreaming || conversationLoading}
         streamingContent={currentResponse}
         conversationCost={conversationCost}
         onSend={handleSend}
         onStopGenerating={stopGenerating}
-        disabled={!selectedAgentId || !hasValidKey}
+        disabled={!selectedAgentId || !hasValidKey || conversationLoading}
         error={streamError}
       />
 
