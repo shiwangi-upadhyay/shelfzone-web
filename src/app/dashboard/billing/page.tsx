@@ -66,21 +66,29 @@ function useSortable<T>(data: T[] | undefined, defaultKey: keyof T) {
 
 // ─── Summary Cards ───────────────────────────────────────
 function SummaryCards({ data }: { data: any }) {
-  const pctChange = data?.monthOverMonthChange;
-  const isUp = pctChange > 0;
+  // Calculate month-over-month change
+  const pctChange = data?.costLastMonth && data?.costLastMonth > 0
+    ? ((data.costThisMonth - data.costLastMonth) / data.costLastMonth) * 100
+    : null;
+  const isUp = pctChange ? pctChange > 0 : false;
+
+  // Calculate average cost per agent
+  const avgCostPerAgent = data?.activeAgents && data?.activeAgents > 0
+    ? data.costThisMonth / data.activeAgents
+    : 0;
 
   const cards = [
     {
       label: 'Total Spend',
-      value: fmt(data?.totalSpend),
+      value: fmt(data?.totalCost),
       icon: DollarSign,
       sub: 'All time',
     },
     {
       label: 'This Month',
-      value: fmt(data?.thisMonth),
+      value: fmt(data?.costThisMonth),
       icon: isUp ? TrendingUp : TrendingDown,
-      sub: pctChange != null ? `${isUp ? '+' : ''}${pctChange.toFixed(1)}% vs last month` : undefined,
+      sub: pctChange != null ? `${isUp ? '+' : ''}${pctChange.toFixed(1)}% vs last month` : 'First month',
       subColor: isUp ? 'text-red-500' : 'text-green-500',
     },
     {
@@ -91,7 +99,7 @@ function SummaryCards({ data }: { data: any }) {
     },
     {
       label: 'Avg Cost / Agent',
-      value: fmt(data?.avgCostPerAgent),
+      value: fmt(avgCostPerAgent),
       icon: CalendarDays,
       sub: 'This month',
     },
