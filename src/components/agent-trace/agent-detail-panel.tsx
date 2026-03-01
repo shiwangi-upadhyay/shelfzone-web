@@ -40,13 +40,13 @@ export function AgentDetailPanel({ open, onClose, agentName, agentId, sessionId,
             </TabsTrigger>
           </TabsList>
           <TabsContent value="conversation" className="flex-1 overflow-hidden mt-0">
-            <ConversationTab sessionId={sessionId} />
+            <ConversationTab sessionId={sessionId} agentId={agentId} />
           </TabsContent>
           <TabsContent value="cost" className="flex-1 overflow-hidden mt-0">
             <CostTab agentId={agentId} />
           </TabsContent>
           <TabsContent value="logs" className="flex-1 overflow-hidden mt-0">
-            <RawLogsTab sessionId={sessionId} />
+            <RawLogsTab sessionId={sessionId} agentId={agentId} />
           </TabsContent>
         </Tabs>
       </SheetContent>

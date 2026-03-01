@@ -6,9 +6,10 @@ import { useOrgAgentOverview, type OrgEmployee } from '@/hooks/use-agent-stats';
 import { useTraces } from '@/hooks/use-traces';
 import { ViewToggle } from './view-toggle';
 import { TraceFilters } from './trace-filters';
-import { AgentBadge, StatusDot } from './agent-badge';
-import { AgentTree } from './agent-tree';
+import { StatusDot } from './agent-badge';
 import { AgentDetailPanel } from './agent-detail-panel';
+import { OrgTreeView } from './org-tree-view';
+import { AgentTreeView } from './agent-tree-view';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 import { cn } from '@/lib/utils';
@@ -66,44 +67,6 @@ export function AgentMap() {
     return result;
   }, [departments, departmentFilter, search]);
 
-  // Build hierarchy tree
-  const buildTree = (emps: OrgEmployee[], parentId: string | null = null, depth = 0): React.ReactNode[] => {
-    return emps
-      .filter(e => e.managerId === parentId)
-      .map(emp => (
-        <div key={emp.employeeId} className={cn(depth > 0 && 'ml-6 border-l border-border/40 pl-4')}>
-          <div className="py-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground">{emp.name}</span>
-              <span className="text-[11px] text-muted-foreground font-mono tabular-nums">
-                ${Number(emp.totalCost).toFixed(2)}
-              </span>
-              {emp.activeAgents > 0 && (
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                  {emp.activeAgents} active
-                </span>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {emp.agents.map(agent => (
-                <AgentBadge
-                  key={agent.id}
-                  name={agent.name}
-                  status={agent.status}
-                  cost={agent.totalCost}
-                  onClick={() => openPanel(agent.name, agent.id, null, agent.status)}
-                />
-              ))}
-              {emp.agents.length === 0 && (
-                <span className="text-[11px] text-muted-foreground/60 italic">No agents assigned</span>
-              )}
-            </div>
-          </div>
-          {buildTree(emps, emp.employeeId, depth + 1)}
-        </div>
-      ));
-  };
-
   return (
     <div className="space-y-6">
       {/* Controls */}
@@ -131,32 +94,14 @@ export function AgentMap() {
         </div>
       ) : view === 'org' ? (
         /* ─── ORG VIEW ─── */
-        <div className="space-y-3">
-          {[...filteredDepartments.entries()].map(([dept, emps]) => (
-            <div key={dept} className="rounded-lg border border-border/60 bg-card">
-              <div className="px-4 py-2.5 border-b border-border/40 flex items-center justify-between">
-                <h3 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
-                  {dept}
-                </h3>
-                <span className="text-[10px] text-muted-foreground font-mono">
-                  {emps.length} {emps.length === 1 ? 'member' : 'members'}
-                </span>
-              </div>
-              <div className="p-4">
-                {buildTree(emps)}
-              </div>
-            </div>
-          ))}
-          {filteredDepartments.size === 0 && (
-            <div className="text-center py-16 text-muted-foreground">
-              <p className="text-sm">No employees match your filters</p>
-            </div>
-          )}
-        </div>
+        <OrgTreeView
+          employees={[...filteredDepartments.values()].flat()}
+          onAgentClick={(agentId, agentName, status) => openPanel(agentName, agentId, null, status)}
+        />
       ) : (
         /* ─── AGENT VIEW ─── */
-        <div className="space-y-3">
-          {(employees || [])
+        <AgentTreeView
+          employees={(employees || [])
             .filter(emp => emp.agents.length > 0)
             .filter(emp => {
               if (departmentFilter !== 'all' && emp.department?.name !== departmentFilter) return false;
@@ -164,34 +109,9 @@ export function AgentMap() {
               const q = search.toLowerCase();
               return emp.name.toLowerCase().includes(q) ||
                 emp.agents.some(a => a.name.toLowerCase().includes(q));
-            })
-            .map(emp => (
-              <div key={emp.employeeId} className="rounded-lg border border-border/60 bg-card">
-                <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                      {emp.name.charAt(0)}
-                    </div>
-                    <div>
-                      <span className="font-medium text-sm">{emp.name}</span>
-                      <span className="text-xs text-muted-foreground ml-2">{emp.department?.name}</span>
-                    </div>
-                  </div>
-                  <span className="text-xs font-mono text-muted-foreground tabular-nums">
-                    ${Number(emp.totalCost).toFixed(2)} today
-                  </span>
-                </div>
-                <div className="p-4">
-                  <AgentTree
-                    agents={emp.agents.map(a => ({
-                      id: a.id, name: a.name, status: a.status, totalCost: a.totalCost,
-                    }))}
-                    onAgentClick={(agent) => openPanel(agent.name, agent.id, null, agent.status)}
-                  />
-                </div>
-              </div>
-            ))}
-        </div>
+            })}
+          onAgentClick={(agentId, agentName, status) => openPanel(agentName, agentId, null, status)}
+        />
       )}
 
       {/* ─── RECENT TRACES ─── */}
