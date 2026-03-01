@@ -19,7 +19,13 @@ export function useSendMessage(agentId: string | null, conversationId: string | 
     setAbortController(controller);
     
     try {
-      const token = localStorage.getItem('token'); // Or get from auth context
+      // Get auth token from storage
+      const stored = localStorage.getItem('shelfzone-auth');
+      const token = stored ? JSON.parse(stored)?.state?.accessToken : null;
+      
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
       
       // Use fetch to initiate SSE connection
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/command-center/message`, {
