@@ -29,11 +29,12 @@ import {
   useTestGatewayConnection,
 } from '@/hooks/use-gateway-key';
 import { toast } from 'sonner';
+import { ErrorState } from '@/components/ui/error-state';
 
 const GATEWAY_URL = 'http://157.10.98.227:3001/api/gateway/v1';
 
 export default function GatewaySettingsPage() {
-  const { data: status, isLoading } = useGatewayKeyStatus();
+  const { data: status, isLoading, error, refetch } = useGatewayKeyStatus();
   const createKey = useCreateGatewayKey();
   const regenerateKey = useRegenerateGatewayKey();
   const testConnection = useTestGatewayConnection();
@@ -76,6 +77,20 @@ export default function GatewaySettingsPage() {
     navigator.clipboard.writeText(key);
     toast.success('API key copied to clipboard!');
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-r-transparent" />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return <ErrorState title="Failed to load gateway settings" message="Unable to load gateway key information. Please try again." onRetry={refetch} />;
+  }
 
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(GATEWAY_URL);

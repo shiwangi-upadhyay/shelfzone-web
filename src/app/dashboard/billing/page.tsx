@@ -22,6 +22,9 @@ import {
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { Download, TrendingUp, TrendingDown, Bot, DollarSign, CalendarDays } from 'lucide-react';
+import { CardGridSkeleton } from '@/components/ui/card-grid-skeleton';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 
 // ─── Helpers ─────────────────────────────────────────────
 function fmt(n: number | undefined | null, decimals = 2) {
@@ -457,7 +460,7 @@ type Tab = 'agent' | 'employee' | 'model';
 export default function BillingPage() {
   const [activeTab, setActiveTab] = useState<Tab>('agent');
 
-  const { data: summary, isLoading: summaryLoading } = useBillingSummary();
+  const { data: summary, isLoading: summaryLoading, error: summaryError, refetch: refetchSummary } = useBillingSummary();
   const { data: byAgent } = useBillingByAgent();
   const { data: byEmployee } = useBillingByEmployee();
   const { data: byModel } = useBillingByModel();
@@ -468,6 +471,31 @@ export default function BillingPage() {
     { key: 'employee', label: 'By Employee' },
     { key: 'model', label: 'By Model' },
   ];
+
+  // Loading state
+  if (summaryLoading) {
+    return (
+      <div className="mx-auto max-w-7xl space-y-8">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Billing</h1>
+          <p className="text-sm text-muted-foreground">
+            Monitor costs, usage, and invoices across your agents.
+          </p>
+        </div>
+        <CardGridSkeleton count={4} />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="h-80 animate-pulse rounded-xl border bg-card" />
+          <div className="h-80 animate-pulse rounded-xl border bg-card" />
+        </div>
+        <TableSkeleton rows={8} columns={6} />
+      </div>
+    );
+  }
+
+  // Error state
+  if (summaryError) {
+    return <ErrorState title="Failed to load billing data" message="Unable to load billing information. Please try again." onRetry={refetchSummary} />;
+  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
@@ -483,15 +511,7 @@ export default function BillingPage() {
       </div>
 
       {/* Summary Cards */}
-      {summaryLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-28 animate-pulse rounded-xl border bg-card" />
-          ))}
-        </div>
-      ) : (
-        <SummaryCards data={summary} />
-      )}
+      <SummaryCards data={summary} />
 
       {/* Charts */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { DollarSign, Plus, Loader2, AlertTriangle, Play } from 'lucide-react';
 import { toast } from 'sonner';
+import { ErrorState } from '@/components/ui/error-state';
 
 interface Budget {
   id: string;
@@ -42,7 +43,7 @@ export default function BudgetsPage() {
   const [month, setMonth] = useState(String(new Date().getMonth() + 1));
   const [year, setYear] = useState(String(new Date().getFullYear()));
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['agent-budgets'],
     queryFn: () => api.get<any>('/api/agent-portal/budgets'),
   });
@@ -88,6 +89,11 @@ export default function BudgetsPage() {
     if (pct >= 60) return 'bg-yellow-500';
     return '';
   };
+
+  // Error state
+  if (error) {
+    return <ErrorState title="Failed to load budgets" message="Unable to load budget data. Please try again." onRetry={refetch} />;
+  }
 
   return (
     <div className="space-y-6">
