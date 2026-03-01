@@ -4,62 +4,120 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AgentSidebar } from '@/components/command-center/agent-sidebar';
-import { ChatPanel } from '@/components/command-center/chat-panel';
-import { TaskBoard } from '@/components/command-center/task-board';
-import { useInstruct, useTraceStream } from '@/hooks/use-command-center';
+import { AgentSelector } from '@/components/command-center/agent-selector';
+import { ChatInterface } from '@/components/command-center/chat-interface';
+import { useSendMessage } from '@/hooks/use-command-center-stream';
 import { useApiKeyStatus } from '@/hooks/use-api-key';
-import { ApiError } from '@/lib/api';
-import type { StreamMessage } from '@/hooks/use-command-center';
+import { useAgentConversation } from '@/hooks/use-conversations';
 import { ErrorState } from '@/components/ui/error-state';
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
 
 export default function CommandCenterPage() {
   const router = useRouter();
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-  const [traceId, setTraceId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<StreamMessage[]>([]);
-  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
-
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  
   const { data: keyStatus, isLoading: keyLoading, error: keyError, refetch: refetchKey } = useApiKeyStatus();
-  const instruct = useInstruct(selectedAgentId);
-  const { events, totalCost, isCompleted, tasks, reset } = useTraceStream(traceId);
+  
+  // Load conversation for selected agent
+  const { 
+    data: conversation, 
+    isLoading: conversationLoading,
+    refetch: refetchConversation 
+  } = useAgentConversation(selectedAgentId);
+  
+  const { 
+    sendMessage, 
+    isStreaming, 
+    currentResponse, 
+    totalCost,
+    error: streamError,
+    stopGenerating
+  } = useSendMessage(selectedAgentId, conversationId);
 
   const hasValidKey = keyStatus?.hasKey && keyStatus?.isValid;
 
-  // Reset conversation when switching agents
+  // Load conversation when agent changes
   useEffect(() => {
     if (selectedAgentId) {
-      reset();
+      // Clear messages immediately when switching agents
       setMessages([]);
-      setTraceId(null);
+      setConversationId(null);
+      
+      // The useAgentConversation hook will fetch the conversation
+      // and the next useEffect will load messages
     }
-  }, [selectedAgentId, reset]);
+  }, [selectedAgentId]);
+
+  // Load messages from fetched conversation
+  useEffect(() => {
+    if (conversation) {
+      setConversationId(conversation.id);
+      
+      // Map conversation messages to local message format
+      const loadedMessages: Message[] = (conversation.messages || []).map((msg) => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.createdAt,
+      }));
+      
+      setMessages(loadedMessages);
+    } else if (selectedAgentId && !conversationLoading) {
+      // No conversation exists yet, start fresh
+      setMessages([]);
+      setConversationId(null);
+    }
+  }, [conversation, selectedAgentId, conversationLoading]);
+
+  // When response arrives, add assistant message
+  useEffect(() => {
+    if (currentResponse && messages.length > 0 && !isStreaming) {
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg.role === 'user') {
+        // Only add if we don't already have an assistant response after this user message
+        const hasAssistantResponse = messages.slice(-1)[0].role === 'assistant';
+        if (!hasAssistantResponse) {
+          setMessages(prev => [...prev, {
+            id: Math.random().toString(36),
+            role: 'assistant',
+            content: currentResponse,
+            timestamp: new Date().toISOString()
+          }]);
+          
+          // Refetch conversation to get updated messages from DB
+          setTimeout(() => {
+            refetchConversation();
+          }, 500);
+        }
+      }
+    }
+  }, [currentResponse, isStreaming, refetchConversation]); // Deliberately not including messages to avoid infinite loop
 
   const handleSend = useCallback(
-    (instruction: string) => {
-      if (!selectedAgentId || !hasValidKey) return;
+    async (message: string) => {
+      if (!selectedAgentId || !hasValidKey || isStreaming) return;
 
-      const userMsg: StreamMessage = {
+      // Add user message to chat immediately
+      const userMsg: Message = {
         id: Math.random().toString(36).slice(2) + Date.now().toString(36),
         role: 'user',
-        content: instruction,
+        content: message,
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, userMsg]);
-      setApiKeyError(null);
 
-      instruct.mutate(instruction, {
-        onSuccess: (data) => {
-          setTraceId(data.traceId);
-        },
-        onError: (err) => {
-          if (err instanceof ApiError && err.status === 403) {
-            setApiKeyError('Your API key is invalid or expired. Please update it in settings.');
-          }
-        },
-      });
+      // Send message
+      await sendMessage(message);
     },
-    [selectedAgentId, hasValidKey, instruct]
+    [selectedAgentId, hasValidKey, isStreaming, sendMessage]
   );
 
   // Loading state
@@ -98,31 +156,45 @@ export default function CommandCenterPage() {
 
   return (
     <div className="flex h-[calc(100vh-7rem)] rounded-xl border bg-background overflow-hidden relative">
-      {apiKeyError && (
+      {/* Error banner */}
+      {streamError && (
         <div className="absolute top-0 inset-x-0 z-10 bg-red-50 dark:bg-red-950/40 border-b border-red-200 dark:border-red-800 px-4 py-2 text-sm text-red-700 dark:text-red-300 text-center">
-          {apiKeyError}{' '}
-          <button
-            onClick={() => router.push('/dashboard/settings/api-keys')}
-            className="underline font-medium hover:text-red-900 dark:hover:text-red-100"
-          >
-            Update settings
-          </button>
+          {streamError}
+          {streamError.includes('API key') && (
+            <>
+              {' '}
+              <button
+                onClick={() => router.push('/dashboard/settings/api-keys')}
+                className="underline font-medium hover:text-red-900 dark:hover:text-red-100"
+              >
+                Update settings
+              </button>
+            </>
+          )}
         </div>
       )}
 
-      <AgentSidebar selectedAgentId={selectedAgentId} onSelectAgent={setSelectedAgentId} />
-
-      <ChatPanel
-        messages={messages}
-        events={events}
-        totalCost={totalCost}
-        isCompleted={isCompleted}
-        isLoading={instruct.isPending || (!!traceId && !isCompleted)}
-        onSend={handleSend}
-        disabled={!selectedAgentId || !!apiKeyError}
+      {/* Left Sidebar - Agent List */}
+      <AgentSelector 
+        selectedAgentId={selectedAgentId}
+        onSelectAgent={setSelectedAgentId}
       />
 
-      <TaskBoard tasks={tasks} />
+      {/* Center Panel - Chat */}
+      <ChatInterface
+        selectedAgentId={selectedAgentId}
+        messages={messages}
+        isStreaming={isStreaming}
+        streamingContent={currentResponse}
+        totalCost={totalCost}
+        onSend={handleSend}
+        onStopGenerating={stopGenerating}
+        disabled={!selectedAgentId || !hasValidKey || conversationLoading}
+        error={streamError}
+      />
+
+      {/* Right Sidebar - Hidden for now (Phase 3) */}
+      {/* TODO: Show cost breakdown when totalCost is available */}
     </div>
   );
 }

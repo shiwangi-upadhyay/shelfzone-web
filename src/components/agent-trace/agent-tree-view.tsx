@@ -1,0 +1,231 @@
+'use client';
+
+import { useMemo, useCallback } from 'react';
+import ReactFlow, {
+  Background,
+  Controls,
+  MiniMap,
+  type Node,
+  type Edge,
+  Position,
+  MarkerType,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+import { type OrgEmployee } from '@/hooks/use-agent-stats';
+import { cn } from '@/lib/utils';
+import { AGENT_EMOJI } from './agent-badge';
+
+interface EmployeeNodeData {
+  type: 'employee';
+  employeeId: string;
+  name: string;
+  department?: string;
+  totalCost: number;
+}
+
+interface AgentNodeData {
+  type: 'agent';
+  agentId: string;
+  name: string;
+  status: string;
+  cost: number;
+  model?: string;
+  onAgentClick: (agentId: string, agentName: string, status: string) => void;
+}
+
+type NodeData = EmployeeNodeData | AgentNodeData;
+
+// Custom employee node (owner)
+function EmployeeOwnerNode({ data }: { data: EmployeeNodeData }) {
+  const initials = data.name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+  return (
+    <div className="bg-card border border-border/60 rounded-lg p-3 shadow-sm min-w-[160px]">
+      <div className="flex items-center gap-2.5">
+        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
+          {initials}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">{data.name}</p>
+          <p className="text-[10px] text-muted-foreground truncate">{data.department}</p>
+        </div>
+      </div>
+      <div className="mt-2 pt-2 border-t border-border/30 text-[10px] text-muted-foreground font-mono tabular-nums">
+        ${Number(data.totalCost).toFixed(2)} today
+      </div>
+    </div>
+  );
+}
+
+// Custom agent node
+function AgentNodeComponent({ data }: { data: AgentNodeData }) {
+  const emoji = AGENT_EMOJI[data.name] || '🤖';
+  const statusColor =
+    data.status === 'ACTIVE'
+      ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-400'
+      : data.status === 'PAUSED'
+      ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-400'
+      : 'bg-muted border-border/60 text-muted-foreground';
+
+  return (
+    <button
+      onClick={() => data.onAgentClick(data.agentId, data.name, data.status)}
+      className={cn(
+        'border rounded-lg p-2.5 shadow-sm min-w-[140px] transition-all hover:shadow-md',
+        statusColor
+      )}
+    >
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="text-base">{emoji}</span>
+        <span className="text-xs font-semibold truncate">{data.name}</span>
+      </div>
+      {data.model && (
+        <div className="text-[9px] opacity-75 font-mono truncate mb-1">{data.model}</div>
+      )}
+      <div className="text-[10px] font-mono tabular-nums opacity-90">${Number(data.cost).toFixed(2)}</div>
+    </button>
+  );
+}
+
+const nodeTypes = {
+  employee: EmployeeOwnerNode,
+  agent: AgentNodeComponent,
+};
+
+interface AgentTreeViewProps {
+  employees: OrgEmployee[];
+  departmentFilter: string; // 'all' or specific department name
+  onAgentClick: (agentId: string, agentName: string, status: string) => void;
+}
+
+export function AgentTreeView({ employees, departmentFilter, onAgentClick }: AgentTreeViewProps) {
+  // Build agent-focused tree
+  const { nodes, edges } = useMemo(() => {
+    const nodesArr: Node[] = [];
+    const edgesArr: Edge[] = [];
+
+    // Layout constants
+    const EMPLOYEE_GROUP_SPACING = 350; // horizontal spacing between employee groups
+    const AGENT_SPACING = 180; // horizontal spacing between agents
+    const VERTICAL_SPACING = 120; // vertical spacing from employee to agents
+
+    // Filter employees who have agents AND match department filter
+    const employeesWithAgents = employees
+      .filter((emp) => emp.agents.length > 0)
+      .filter((emp) => {
+        if (departmentFilter === 'all') return true;
+        return emp.department?.name === departmentFilter;
+      });
+
+    // Layout employees side-by-side
+    employeesWithAgents.forEach((emp, empIdx) => {
+      const empNodeId = `emp-${emp.employeeId}`;
+      const groupBaseX = empIdx * EMPLOYEE_GROUP_SPACING;
+      
+      // Calculate employee X position (center of their agents)
+      const agentCount = emp.agents.length;
+      const agentsTotalWidth = (agentCount - 1) * AGENT_SPACING;
+      const employeeX = groupBaseX + agentsTotalWidth / 2;
+
+      // Employee node
+      nodesArr.push({
+        id: empNodeId,
+        type: 'employee',
+        position: { x: employeeX, y: 0 },
+        data: {
+          type: 'employee',
+          employeeId: emp.employeeId,
+          name: emp.name,
+          department: emp.department?.name,
+          totalCost: emp.totalCost,
+        },
+        sourcePosition: Position.Bottom,
+        targetPosition: Position.Top,
+      });
+
+      // Agent nodes (spread horizontally below employee)
+      emp.agents.forEach((agent, agentIdx) => {
+        const agentNodeId = `agent-${agent.id}`;
+        const agentX = groupBaseX + agentIdx * AGENT_SPACING;
+
+        nodesArr.push({
+          id: agentNodeId,
+          type: 'agent',
+          position: { x: agentX, y: VERTICAL_SPACING },
+          data: {
+            type: 'agent',
+            agentId: agent.id,
+            name: agent.name,
+            status: agent.status,
+            cost: agent.totalCost,
+            model: undefined, // TODO: Backend needs to provide model field in agent data
+            onAgentClick,
+          },
+          sourcePosition: Position.Bottom,
+          targetPosition: Position.Top,
+        });
+
+        // Edge from employee to agent - BRIGHT PURPLE LINES!
+        edgesArr.push({
+          id: `${empNodeId}-${agentNodeId}`,
+          source: empNodeId,
+          target: agentNodeId,
+          type: 'smoothstep',
+          style: { 
+            stroke: '#8b5cf6',        // Bright purple - VISIBLE!
+            strokeWidth: 4,           // THICK line
+          },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            color: '#8b5cf6',         // Matching purple arrow
+            width: 20,
+            height: 20,
+          },
+        });
+      });
+    });
+
+    return { nodes: nodesArr, edges: edgesArr };
+  }, [employees, departmentFilter, onAgentClick]);
+
+  if (nodes.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[500px] rounded-lg border border-dashed border-border/60 text-muted-foreground">
+        <p className="text-sm">No agents found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-[600px] rounded-lg border border-border/60 bg-card overflow-hidden">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        fitView
+        fitViewOptions={{ padding: 0.3, maxZoom: 1 }}
+        proOptions={{ hideAttribution: true }}
+        minZoom={0.2}
+        maxZoom={1.2}
+      >
+        <Background gap={24} size={1} color="hsl(var(--border) / 0.2)" />
+        <Controls
+          className="!bg-card !border-border/60 !shadow-sm [&>button]:!bg-card [&>button]:!border-border/40 [&>button]:!text-muted-foreground"
+          showInteractive={false}
+        />
+        <MiniMap
+          className="!bg-card !border-border/60"
+          nodeColor="hsl(var(--muted))"
+          maskColor="hsl(var(--background) / 0.8)"
+          pannable
+          zoomable
+        />
+      </ReactFlow>
+    </div>
+  );
+}

@@ -81,6 +81,34 @@ export function useInstruct(masterAgentId: string | null) {
   });
 }
 
+// ---------- useExecuteMulti ----------
+
+export function useExecuteMulti() {
+  return useMutation({
+    mutationFn: async ({ 
+      agentIds, 
+      instruction, 
+      mode 
+    }: { 
+      agentIds: string[]; 
+      instruction: string; 
+      mode: 'parallel' | 'sequential' | 'delegate' 
+    }) => {
+      console.log('[useExecuteMulti] calling POST /api/agent-gateway/execute-multi', { agentIds, instruction, mode });
+      try {
+        const res = await api.post('/api/agent-gateway/execute-multi', { agentIds, instruction, mode });
+        console.log('[useExecuteMulti] raw response:', res);
+        const data = (res as any).data ?? res;
+        console.log('[useExecuteMulti] extracted data:', data);
+        return data as { traceId: string; sessionId: string };
+      } catch (err) {
+        console.error('[useExecuteMulti] CAUGHT ERROR:', err);
+        throw err;
+      }
+    },
+  });
+}
+
 // ---------- useTraceStream ----------
 
 export function useTraceStream(traceId: string | null) {
