@@ -22,3 +22,13 @@
 
 ✓ Starting...
 ✓ Ready in 538ms
+
+> shelfzone-web-temp@0.1.0 start
+> next start
+
+▲ Next.js 16.1.6
+- Local:         http://localhost:3000
+- Network:       http://157.10.98.227:3000
+
+✓ Starting...
+✓ Ready in 581ms

@@ -4,21 +4,27 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AgentSidebar } from '@/components/command-center/agent-sidebar';
-import { ChatPanel } from '@/components/command-center/chat-panel';
-import { TaskBoard } from '@/components/command-center/task-board';
+import { AgentSelector } from '@/components/command-center/agent-selector';
+import { ChatInterface } from '@/components/command-center/chat-interface';
+import { LiveActivitySidebar } from '@/components/command-center/live-activity-sidebar';
 import { useInstruct, useTraceStream } from '@/hooks/use-command-center';
 import { useApiKeyStatus } from '@/hooks/use-api-key';
 import { ApiError } from '@/lib/api';
 import type { StreamMessage } from '@/hooks/use-command-center';
 import { ErrorState } from '@/components/ui/error-state';
 
+type ExecutionMode = 'delegate' | 'parallel' | 'sequential';
+
 export default function CommandCenterPage() {
   const router = useRouter();
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
+  const [executionMode, setExecutionMode] = useState<ExecutionMode>('delegate');
   const [traceId, setTraceId] = useState<string | null>(null);
   const [messages, setMessages] = useState<StreamMessage[]>([]);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
+  
+  // For now, use first selected agent for instruct (we'll handle multi-agent later)
+  const selectedAgentId = selectedAgentIds[0] || null;
 
   const { data: keyStatus, isLoading: keyLoading, error: keyError, refetch: refetchKey } = useApiKeyStatus();
   const instruct = useInstruct(selectedAgentId);
@@ -26,14 +32,14 @@ export default function CommandCenterPage() {
 
   const hasValidKey = keyStatus?.hasKey && keyStatus?.isValid;
 
-  // Reset conversation when switching agents
+  // Reset conversation when switching agents or mode
   useEffect(() => {
-    if (selectedAgentId) {
+    if (selectedAgentIds.length > 0) {
       reset();
       setMessages([]);
       setTraceId(null);
     }
-  }, [selectedAgentId, reset]);
+  }, [selectedAgentIds, executionMode, reset]);
 
   const handleSend = useCallback(
     (instruction: string) => {
@@ -110,19 +116,28 @@ export default function CommandCenterPage() {
         </div>
       )}
 
-      <AgentSidebar selectedAgentId={selectedAgentId} onSelectAgent={setSelectedAgentId} />
+      <AgentSelector 
+        selectedAgentIds={selectedAgentIds}
+        onSelectAgents={setSelectedAgentIds}
+        executionMode={executionMode}
+        onModeChange={setExecutionMode}
+      />
 
-      <ChatPanel
+      <ChatInterface
         messages={messages}
         events={events}
         totalCost={totalCost}
         isCompleted={isCompleted}
         isLoading={instruct.isPending || (!!traceId && !isCompleted)}
         onSend={handleSend}
-        disabled={!selectedAgentId || !!apiKeyError}
+        disabled={selectedAgentIds.length === 0 || !!apiKeyError}
       />
 
-      <TaskBoard tasks={tasks} />
+      <LiveActivitySidebar 
+        events={events}
+        totalCost={totalCost}
+        isActive={instruct.isPending || (!!traceId && !isCompleted)}
+      />
     </div>
   );
 }

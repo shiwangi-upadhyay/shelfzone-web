@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState, useEffect } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -9,6 +9,8 @@ import ReactFlow, {
   type Edge,
   Position,
   MarkerType,
+  applyNodeChanges,
+  type NodeChange,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { type OrgEmployee } from '@/hooks/use-agent-stats';
@@ -61,8 +63,8 @@ interface OrgTreeViewProps {
 }
 
 export function OrgTreeView({ employees, departmentFilter }: OrgTreeViewProps) {
-  // Build tree hierarchy
-  const { nodes, edges } = useMemo(() => {
+  // State for draggable nodes
+  const initialNodesAndEdges = useMemo(() => {
     const nodesMap = new Map<string, Node>();
     const edgesArr: Edge[] = [];
 
@@ -184,8 +186,18 @@ export function OrgTreeView({ employees, departmentFilter }: OrgTreeViewProps) {
           source: parentId,
           target: nodeId,
           type: 'smoothstep',
-          style: { stroke: 'hsl(var(--border) / 0.4)', strokeWidth: 1.5, strokeDasharray: '5,5' },
-          markerEnd: { type: MarkerType.ArrowClosed, color: 'hsl(var(--border) / 0.4)', width: 15, height: 15 },
+          style: { 
+            stroke: '#8b5cf6',  // Bright purple - highly visible
+            strokeWidth: 3,      // Thick line
+            strokeDasharray: '5,5' 
+          },
+          markerEnd: { 
+            type: MarkerType.ArrowClosed, 
+            color: '#8b5cf6', 
+            width: 20, 
+            height: 20 
+          },
+          animated: false,
         });
       }
 
@@ -226,6 +238,22 @@ export function OrgTreeView({ employees, departmentFilter }: OrgTreeViewProps) {
     return { nodes: Array.from(nodesMap.values()), edges: edgesArr };
   }, [employees, departmentFilter]);
 
+  // State for draggable nodes
+  const [nodes, setNodes] = useState<Node[]>([]);
+
+  // Update nodes when initialNodesAndEdges changes
+  useEffect(() => {
+    setNodes(initialNodesAndEdges.nodes);
+  }, [initialNodesAndEdges.nodes]);
+
+  // Handle node changes (for dragging)
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      setNodes((nds) => applyNodeChanges(changes, nds));
+    },
+    []
+  );
+
   if (nodes.length === 0) {
     return (
       <div className="flex items-center justify-center h-[500px] rounded-lg border border-dashed border-border/60 text-muted-foreground">
@@ -238,8 +266,12 @@ export function OrgTreeView({ employees, departmentFilter }: OrgTreeViewProps) {
     <div className="h-[600px] rounded-lg border border-border/60 bg-card overflow-hidden">
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={initialNodesAndEdges.edges}
         nodeTypes={nodeTypes}
+        onNodesChange={onNodesChange}
+        nodesDraggable={true}
+        nodesConnectable={false}
+        elementsSelectable={true}
         fitView
         fitViewOptions={{ padding: 0.3, maxZoom: 1 }}
         proOptions={{ hideAttribution: true }}
