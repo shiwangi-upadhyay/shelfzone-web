@@ -138,9 +138,24 @@ export default function BudgetsPage() {
         </div>
       ) : budgets.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
-            <DollarSign className="mx-auto h-12 w-12 text-muted-foreground/30" />
-            <p className="mt-4 text-muted-foreground">No budgets configured</p>
+          <CardContent className="py-12">
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                <DollarSign className="h-7 w-7 text-muted-foreground" />
+              </div>
+              <h3 className="mt-3 text-sm font-semibold">No budgets configured</h3>
+              <p className="mt-1 text-xs text-muted-foreground max-w-sm">
+                Create your first budget to track agent spending limits and control costs
+              </p>
+              <Button
+                className="mt-4"
+                size="sm"
+                onClick={() => setOpen(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create Budget
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (
