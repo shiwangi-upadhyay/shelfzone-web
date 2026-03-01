@@ -47,6 +47,11 @@ export default function AnalyticsPage() {
     queryFn: () => api.get<any>('/api/agent-portal/analytics/platform'),
   });
 
+  const { data: agentsData } = useQuery({
+    queryKey: ['agents-count'],
+    queryFn: () => api.get<any>('/api/agent-portal/agents'),
+  });
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-16">
@@ -56,6 +61,15 @@ export default function AnalyticsPage() {
   }
 
   const analytics = data?.data;
+  
+  // Calculate derived metrics
+  const totalAgents = agentsData?.pagination?.total || 0;
+  const activeAgents = agentsData?.data?.filter((a: any) => a.status === 'ACTIVE').length || 0;
+  const totalTokens = (analytics?.totalInputTokens || 0) + (analytics?.totalOutputTokens || 0);
+  const errorRate = analytics?.totalSessions > 0 
+    ? (analytics.errorCount || 0) / analytics.totalSessions 
+    : 0;
+  const avgLatencyMs = analytics?.avgLatencyMs || 0; // Not available in backend, default to 0
 
   return (
     <div className="space-y-6">
@@ -72,9 +86,9 @@ export default function AnalyticsPage() {
               <Bot className="h-4 w-4" />
               Total Agents
             </div>
-            <p className="text-3xl font-bold mt-1">{analytics?.totalAgents || 0}</p>
+            <p className="text-3xl font-bold mt-1">{totalAgents}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {analytics?.activeAgents || 0} active
+              {activeAgents} active
             </p>
           </CardContent>
         </Card>
@@ -102,7 +116,7 @@ export default function AnalyticsPage() {
               <Clock className="h-4 w-4" />
               Avg Latency
             </div>
-            <p className="text-3xl font-bold mt-1">{(analytics?.avgLatencyMs || 0).toFixed(0)}ms</p>
+            <p className="text-3xl font-bold mt-1">{avgLatencyMs > 0 ? `${avgLatencyMs.toFixed(0)}ms` : 'N/A'}</p>
           </CardContent>
         </Card>
       </div>
@@ -115,7 +129,7 @@ export default function AnalyticsPage() {
               <Activity className="h-4 w-4" />
               Total Tokens
             </div>
-            <p className="text-2xl font-bold mt-1">{(analytics?.totalTokens || 0).toLocaleString()}</p>
+            <p className="text-2xl font-bold mt-1">{totalTokens.toLocaleString()}</p>
           </CardContent>
         </Card>
         <Card>
@@ -124,7 +138,7 @@ export default function AnalyticsPage() {
               <AlertTriangle className="h-4 w-4" />
               Error Rate
             </div>
-            <p className="text-2xl font-bold mt-1">{((analytics?.errorRate || 0) * 100).toFixed(1)}%</p>
+            <p className="text-2xl font-bold mt-1">{(errorRate * 100).toFixed(1)}%</p>
           </CardContent>
         </Card>
         <Card>
