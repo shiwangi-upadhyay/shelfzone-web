@@ -245,13 +245,15 @@ export function OrgTreeView({ employees, departmentFilter }: OrgTreeViewProps) {
     return { nodes: Array.from(nodesMap.values()), edges: edgesArr };
   }, [employees, departmentFilter]);
 
-  // State for draggable nodes
+  // State for draggable nodes and edges
   const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
 
-  // Update nodes when initialNodesAndEdges changes
+  // Update nodes and edges when initialNodesAndEdges changes
   useEffect(() => {
     setNodes(initialNodesAndEdges.nodes);
-  }, [initialNodesAndEdges.nodes]);
+    setEdges(initialNodesAndEdges.edges);
+  }, [initialNodesAndEdges.nodes, initialNodesAndEdges.edges]);
 
   // Handle node changes (for dragging)
   const onNodesChange = useCallback(
@@ -273,7 +275,7 @@ export function OrgTreeView({ employees, departmentFilter }: OrgTreeViewProps) {
     <div className="h-[600px] rounded-lg border border-border/60 bg-card overflow-hidden">
       <ReactFlow
         nodes={nodes}
-        edges={initialNodesAndEdges.edges}
+        edges={edges}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         nodesDraggable={true}

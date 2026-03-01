@@ -170,18 +170,21 @@ export function AgentTreeView({ employees, departmentFilter, onAgentClick }: Age
           targetPosition: Position.Top,
         });
 
-        // Edge from employee to agent
+        // Edge from employee to agent - BRIGHT PURPLE LINES!
         edgesArr.push({
           id: `${empNodeId}-${agentNodeId}`,
           source: empNodeId,
           target: agentNodeId,
           type: 'smoothstep',
-          style: { stroke: 'hsl(var(--border) / 0.4)', strokeWidth: 1.5, strokeDasharray: '5,5' },
+          style: { 
+            stroke: '#8b5cf6',        // Bright purple - VISIBLE!
+            strokeWidth: 4,           // THICK line
+          },
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: 'hsl(var(--border) / 0.4)',
-            width: 12,
-            height: 12,
+            color: '#8b5cf6',         // Matching purple arrow
+            width: 20,
+            height: 20,
           },
         });
       });
