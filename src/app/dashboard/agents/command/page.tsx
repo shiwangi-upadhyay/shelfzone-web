@@ -6,59 +6,76 @@ import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AgentSelector } from '@/components/command-center/agent-selector';
 import { ChatInterface } from '@/components/command-center/chat-interface';
-import { useInstruct, useTraceStream } from '@/hooks/use-command-center';
+import { useSendMessage } from '@/hooks/use-command-center-stream';
 import { useApiKeyStatus } from '@/hooks/use-api-key';
-import { ApiError } from '@/lib/api';
-import type { StreamMessage } from '@/hooks/use-command-center';
 import { ErrorState } from '@/components/ui/error-state';
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
 
 export default function CommandCenterPage() {
   const router = useRouter();
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-  const [traceId, setTraceId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<StreamMessage[]>([]);
-  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
-
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [conversationId] = useState<string | null>(null); // TODO: Step 6 - load from conversations
+  
   const { data: keyStatus, isLoading: keyLoading, error: keyError, refetch: refetchKey } = useApiKeyStatus();
-  const instruct = useInstruct(selectedAgentId);
-  const { events, totalCost, isCompleted, reset } = useTraceStream(traceId);
+  const { 
+    sendMessage, 
+    isStreaming, 
+    currentResponse, 
+    totalCost, 
+    error: streamError,
+    stopGenerating 
+  } = useSendMessage(selectedAgentId, conversationId);
 
   const hasValidKey = keyStatus?.hasKey && keyStatus?.isValid;
 
   // Reset conversation when switching agents
   useEffect(() => {
     if (selectedAgentId) {
-      reset();
       setMessages([]);
-      setTraceId(null);
     }
-  }, [selectedAgentId, reset]);
+  }, [selectedAgentId]);
+
+  // When streaming completes, save the assistant message
+  useEffect(() => {
+    if (!isStreaming && currentResponse && messages.length > 0) {
+      // Only add if the last message is from user (streaming just completed)
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === 'user') {
+        const assistantMsg: Message = {
+          id: Math.random().toString(36).slice(2) + Date.now().toString(36),
+          role: 'assistant',
+          content: currentResponse,
+          timestamp: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
+      }
+    }
+  }, [isStreaming, currentResponse]); // Deliberately not including messages to avoid infinite loop
 
   const handleSend = useCallback(
-    (instruction: string) => {
-      if (!selectedAgentId || !hasValidKey) return;
+    async (message: string) => {
+      if (!selectedAgentId || !hasValidKey || isStreaming) return;
 
-      const userMsg: StreamMessage = {
+      // Add user message to chat immediately
+      const userMsg: Message = {
         id: Math.random().toString(36).slice(2) + Date.now().toString(36),
         role: 'user',
-        content: instruction,
+        content: message,
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, userMsg]);
-      setApiKeyError(null);
 
-      instruct.mutate(instruction, {
-        onSuccess: (data) => {
-          setTraceId(data.traceId);
-        },
-        onError: (err) => {
-          if (err instanceof ApiError && err.status === 403) {
-            setApiKeyError('Your API key is invalid or expired. Please update it in settings.');
-          }
-        },
-      });
+      // Start streaming
+      await sendMessage(message);
     },
-    [selectedAgentId, hasValidKey, instruct]
+    [selectedAgentId, hasValidKey, isStreaming, sendMessage]
   );
 
   // Loading state
@@ -97,15 +114,21 @@ export default function CommandCenterPage() {
 
   return (
     <div className="flex h-[calc(100vh-7rem)] rounded-xl border bg-background overflow-hidden relative">
-      {apiKeyError && (
+      {/* Error banner */}
+      {streamError && (
         <div className="absolute top-0 inset-x-0 z-10 bg-red-50 dark:bg-red-950/40 border-b border-red-200 dark:border-red-800 px-4 py-2 text-sm text-red-700 dark:text-red-300 text-center">
-          {apiKeyError}{' '}
-          <button
-            onClick={() => router.push('/dashboard/settings/api-keys')}
-            className="underline font-medium hover:text-red-900 dark:hover:text-red-100"
-          >
-            Update settings
-          </button>
+          {streamError}
+          {streamError.includes('API key') && (
+            <>
+              {' '}
+              <button
+                onClick={() => router.push('/dashboard/settings/api-keys')}
+                className="underline font-medium hover:text-red-900 dark:hover:text-red-100"
+              >
+                Update settings
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -119,15 +142,16 @@ export default function CommandCenterPage() {
       <ChatInterface
         selectedAgentId={selectedAgentId}
         messages={messages}
-        events={events}
-        totalCost={totalCost}
-        isCompleted={isCompleted}
-        isLoading={instruct.isPending || (!!traceId && !isCompleted)}
+        isStreaming={isStreaming}
+        streamingContent={currentResponse}
         onSend={handleSend}
-        disabled={!selectedAgentId || !!apiKeyError}
+        onStopGenerating={stopGenerating}
+        disabled={!selectedAgentId || !hasValidKey}
+        error={streamError}
       />
 
       {/* Right Sidebar - Hidden for now (Phase 3) */}
+      {/* TODO: Show cost breakdown when totalCost is available */}
     </div>
   );
 }
