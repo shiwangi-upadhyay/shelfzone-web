@@ -112,7 +112,7 @@ function ActivityItemCard({ item }: { item: ActivityItem }) {
           {item.cost !== undefined && item.cost > 0 && (
             <div className="mt-1 flex items-center gap-1 text-[9px] font-mono text-muted-foreground">
               <DollarSign className="h-2.5 w-2.5" />
-              <span>${item.cost.toFixed(4)}</span>
+              <span>${(Number(item.cost) || 0).toFixed(4)}</span>
             </div>
           )}
         </div>
