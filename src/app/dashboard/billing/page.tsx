@@ -66,21 +66,29 @@ function useSortable<T>(data: T[] | undefined, defaultKey: keyof T) {
 
 // ─── Summary Cards ───────────────────────────────────────
 function SummaryCards({ data }: { data: any }) {
-  const pctChange = data?.monthOverMonthChange;
-  const isUp = pctChange > 0;
+  // Calculate month-over-month change
+  const pctChange = data?.costLastMonth && data?.costLastMonth > 0
+    ? ((data.costThisMonth - data.costLastMonth) / data.costLastMonth) * 100
+    : null;
+  const isUp = pctChange ? pctChange > 0 : false;
+
+  // Calculate average cost per agent
+  const avgCostPerAgent = data?.activeAgents && data?.activeAgents > 0
+    ? data.costThisMonth / data.activeAgents
+    : 0;
 
   const cards = [
     {
       label: 'Total Spend',
-      value: fmt(data?.totalSpend),
+      value: fmt(data?.totalCost),
       icon: DollarSign,
       sub: 'All time',
     },
     {
       label: 'This Month',
-      value: fmt(data?.thisMonth),
+      value: fmt(data?.costThisMonth),
       icon: isUp ? TrendingUp : TrendingDown,
-      sub: pctChange != null ? `${isUp ? '+' : ''}${pctChange.toFixed(1)}% vs last month` : undefined,
+      sub: pctChange != null ? `${isUp ? '+' : ''}${pctChange.toFixed(1)}% vs last month` : 'First month',
       subColor: isUp ? 'text-red-500' : 'text-green-500',
     },
     {
@@ -91,7 +99,7 @@ function SummaryCards({ data }: { data: any }) {
     },
     {
       label: 'Avg Cost / Agent',
-      value: fmt(data?.avgCostPerAgent),
+      value: fmt(avgCostPerAgent),
       icon: CalendarDays,
       sub: 'This month',
     },
@@ -243,10 +251,10 @@ function ByAgentTable({ data }: { data: any[] | undefined }) {
           <tr>
             <Th label="Agent Name" sortKey="agentName" {...hp} />
             <Th label="Model" sortKey="model" {...hp} />
-            <Th label="Sessions" sortKey="sessions" {...hp} mono />
+            <Th label="Sessions" sortKey="sessionCount" {...hp} mono />
             <Th label="Total Tokens" sortKey="totalTokens" {...hp} mono />
             <Th label="Total Cost" sortKey="totalCost" {...hp} mono />
-            <Th label="Avg/Session" sortKey="avgPerSession" {...hp} mono />
+            <Th label="Avg/Session" sortKey="avgCostPerSession" {...hp} mono />
           </tr>
         </thead>
         <tbody className="divide-y">
@@ -254,10 +262,10 @@ function ByAgentTable({ data }: { data: any[] | undefined }) {
             <tr key={i} className="hover:bg-muted/50 transition-colors">
               <td className="px-4 py-3 font-medium">{r.agentName}</td>
               <td className="px-4 py-3 text-muted-foreground">{r.model}</td>
-              <td className="px-4 py-3 font-mono">{fmtNum(r.sessions)}</td>
+              <td className="px-4 py-3 font-mono">{fmtNum(r.sessionCount)}</td>
               <td className="px-4 py-3 font-mono">{fmtNum(r.totalTokens)}</td>
               <td className="px-4 py-3 font-mono">{fmt(r.totalCost)}</td>
-              <td className="px-4 py-3 font-mono">{fmt(r.avgPerSession)}</td>
+              <td className="px-4 py-3 font-mono">{fmt(r.avgCostPerSession)}</td>
             </tr>
           ))}
           {sorted.length === 0 && (
@@ -280,9 +288,9 @@ function ByEmployeeTable({ data }: { data: any[] | undefined }) {
       <table className="w-full text-sm">
         <thead className="border-b">
           <tr>
-            <Th label="Employee" sortKey="employeeName" {...hp} />
+            <Th label="Employee" sortKey="name" {...hp} />
             <Th label="Department" sortKey="department" {...hp} />
-            <Th label="Agents" sortKey="agents" {...hp} mono />
+            <Th label="Agents" sortKey="agentCount" {...hp} mono />
             <Th label="Total Cost" sortKey="totalCost" {...hp} mono />
             <Th label="Top Agent" sortKey="topAgent" {...hp} />
           </tr>
@@ -290,9 +298,9 @@ function ByEmployeeTable({ data }: { data: any[] | undefined }) {
         <tbody className="divide-y">
           {sorted.map((r: any, i: number) => (
             <tr key={i} className="hover:bg-muted/50 transition-colors">
-              <td className="px-4 py-3 font-medium">{r.employeeName}</td>
+              <td className="px-4 py-3 font-medium">{r.name}</td>
               <td className="px-4 py-3 text-muted-foreground">{r.department}</td>
-              <td className="px-4 py-3 font-mono">{fmtNum(r.agents)}</td>
+              <td className="px-4 py-3 font-mono">{fmtNum(r.agentCount)}</td>
               <td className="px-4 py-3 font-mono">{fmt(r.totalCost)}</td>
               <td className="px-4 py-3">{r.topAgent}</td>
             </tr>
@@ -318,7 +326,7 @@ function ByModelTable({ data }: { data: any[] | undefined }) {
         <thead className="border-b">
           <tr>
             <Th label="Model" sortKey="model" {...hp} />
-            <Th label="Sessions" sortKey="sessions" {...hp} mono />
+            <Th label="Sessions" sortKey="sessionCount" {...hp} mono />
             <Th label="Total Tokens" sortKey="totalTokens" {...hp} mono />
             <Th label="Total Cost" sortKey="totalCost" {...hp} mono />
           </tr>
@@ -327,7 +335,7 @@ function ByModelTable({ data }: { data: any[] | undefined }) {
           {sorted.map((r: any, i: number) => (
             <tr key={i} className="hover:bg-muted/50 transition-colors">
               <td className="px-4 py-3 font-medium">{r.model}</td>
-              <td className="px-4 py-3 font-mono">{fmtNum(r.sessions)}</td>
+              <td className="px-4 py-3 font-mono">{fmtNum(r.sessionCount)}</td>
               <td className="px-4 py-3 font-mono">{fmtNum(r.totalTokens)}</td>
               <td className="px-4 py-3 font-mono">{fmt(r.totalCost)}</td>
             </tr>

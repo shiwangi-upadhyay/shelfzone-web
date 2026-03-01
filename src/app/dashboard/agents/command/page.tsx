@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,15 @@ export default function CommandCenterPage() {
 
   const hasValidKey = keyStatus?.hasKey && keyStatus?.isValid;
 
+  // Reset conversation when switching agents
+  useEffect(() => {
+    if (selectedAgentId) {
+      reset();
+      setMessages([]);
+      setTraceId(null);
+    }
+  }, [selectedAgentId, reset]);
+
   const handleSend = useCallback(
     (instruction: string) => {
       if (!selectedAgentId || !hasValidKey) return;
@@ -37,7 +46,6 @@ export default function CommandCenterPage() {
       };
       setMessages((prev) => [...prev, userMsg]);
       setApiKeyError(null);
-      reset();
 
       instruct.mutate(instruction, {
         onSuccess: (data) => {
@@ -50,7 +58,7 @@ export default function CommandCenterPage() {
         },
       });
     },
-    [selectedAgentId, hasValidKey, instruct, reset]
+    [selectedAgentId, hasValidKey, instruct]
   );
 
   // Loading state
