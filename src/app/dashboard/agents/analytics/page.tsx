@@ -55,7 +55,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  const analytics = data;
+  const analytics = data?.data;
 
   return (
     <div className="space-y-6">
