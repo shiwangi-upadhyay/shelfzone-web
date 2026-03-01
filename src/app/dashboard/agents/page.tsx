@@ -32,8 +32,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Bot, Plus, Loader2, Activity, AlertCircle, Pause, Archive } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Bot, Plus, Loader2, Activity, AlertCircle, Pause, Archive, GitBranch, List } from 'lucide-react';
 import { toast } from 'sonner';
+import { AgentHierarchy } from '@/components/agents/agent-hierarchy';
 
 interface Agent {
   id: string;
@@ -49,6 +51,8 @@ interface Agent {
   lastHealthCheck: string | null;
   lastHealthStatus: string | null;
   createdAt: string;
+  parentAgent?: { id: string; name: string } | null;
+  childAgents?: { id: string; name: string }[];
 }
 
 const statusColors: Record<string, string> = {
@@ -73,7 +77,7 @@ export default function AgentsPage() {
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState('CHAT');
-  const [model, setModel] = useState('gpt-4');
+  const [model, setModel] = useState('claude-sonnet-4-5');
   const [systemPrompt, setSystemPrompt] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -91,6 +95,7 @@ export default function AgentsPage() {
       api.post('/api/agent-portal/agents', body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agents'] });
+      queryClient.invalidateQueries({ queryKey: ['agent-hierarchy'] });
       toast.success('Agent created');
       resetForm();
     },
@@ -103,7 +108,7 @@ export default function AgentsPage() {
     setSlug('');
     setDescription('');
     setType('CHAT');
-    setModel('gpt-4');
+    setModel('claude-sonnet-4-5');
     setSystemPrompt('');
   };
 
@@ -189,100 +194,121 @@ export default function AgentsPage() {
         </Dialog>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-4">
-        <Input
-          placeholder="Search agents..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-xs"
-        />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="ACTIVE">Active</SelectItem>
-            <SelectItem value="INACTIVE">Inactive</SelectItem>
-            <SelectItem value="DRAFT">Draft</SelectItem>
-            <SelectItem value="PAUSED">Paused</SelectItem>
-            <SelectItem value="ARCHIVED">Archived</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <Tabs defaultValue="hierarchy" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="hierarchy" className="gap-2">
+            <GitBranch className="h-4 w-4" />
+            Hierarchy
+          </TabsTrigger>
+          <TabsTrigger value="list" className="gap-2">
+            <List className="h-4 w-4" />
+            List View
+          </TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bot className="h-5 w-5" />
-            Agents ({agents.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : agents.length === 0 ? (
-            <div className="text-center py-12">
-              <Bot className="mx-auto h-12 w-12 text-muted-foreground/30" />
-              <p className="mt-4 text-muted-foreground">No agents found. Create your first agent.</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Agent</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Model</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Health</TableHead>
-                  <TableHead>Critical</TableHead>
-                  <TableHead className="text-right">Created</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {agents.map((agent: any) => (
-                  <TableRow key={agent.id}>
-                    <TableCell>
-                      <Link href={`/dashboard/agents/${agent.id}`} className="hover:underline">
-                        <div>
-                          <span className="font-medium">{agent.name}</span>
-                          <p className="text-xs text-muted-foreground">{agent.slug}</p>
-                        </div>
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{agent.type}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{agent.model}</TableCell>
-                    <TableCell>
-                      <Badge variant={statusColors[agent.status] as any} className="gap-1">
-                        {statusIcons[agent.status]}
-                        {agent.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {agent.lastHealthStatus ? (
-                        <Badge variant={agent.lastHealthStatus === 'healthy' ? 'default' : 'destructive'}>
-                          {agent.lastHealthStatus}
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {agent.isCritical && <Badge variant="destructive">Critical</Badge>}
-                    </TableCell>
-                    <TableCell className="text-right text-sm text-muted-foreground">
-                      {new Date(agent.createdAt).toLocaleDateString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+        <TabsContent value="hierarchy">
+          <AgentHierarchy />
+        </TabsContent>
+
+        <TabsContent value="list" className="space-y-4">
+          {/* Filters */}
+          <div className="flex gap-4">
+            <Input
+              placeholder="Search agents..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="max-w-xs"
+            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="INACTIVE">Inactive</SelectItem>
+                <SelectItem value="DRAFT">Draft</SelectItem>
+                <SelectItem value="PAUSED">Paused</SelectItem>
+                <SelectItem value="ARCHIVED">Archived</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="h-5 w-5" />
+                Agents ({agents.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : agents.length === 0 ? (
+                <div className="text-center py-12">
+                  <Bot className="mx-auto h-12 w-12 text-muted-foreground/30" />
+                  <p className="mt-4 text-muted-foreground">No agents found.</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Agent</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Model</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Health</TableHead>
+                      <TableHead>Critical</TableHead>
+                      <TableHead className="text-right">Created</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {agents.map((agent: any) => (
+                      <TableRow key={agent.id}>
+                        <TableCell>
+                          <Link href={`/dashboard/agents/${agent.id}`} className="hover:underline">
+                            <div>
+                              <span className="font-medium">{agent.name}</span>
+                              <p className="text-xs text-muted-foreground">{agent.description || agent.slug}</p>
+                            </div>
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={agent.parentAgent ? 'outline' : 'default'}>
+                            {agent.parentAgent ? 'Sub-Agent' : 'Master'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm font-mono text-muted-foreground">{agent.model}</TableCell>
+                        <TableCell>
+                          <Badge variant={statusColors[agent.status] as any} className="gap-1">
+                            {statusIcons[agent.status]}
+                            {agent.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {agent.lastHealthStatus ? (
+                            <Badge variant={agent.lastHealthStatus === 'healthy' ? 'default' : 'destructive'}>
+                              {agent.lastHealthStatus}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {agent.isCritical && <Badge variant="destructive">Critical</Badge>}
+                        </TableCell>
+                        <TableCell className="text-right text-sm text-muted-foreground">
+                          {new Date(agent.createdAt).toLocaleDateString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
