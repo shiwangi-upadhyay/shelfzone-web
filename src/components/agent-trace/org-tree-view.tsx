@@ -100,25 +100,100 @@ export function OrgTreeView({ employees, onAgentClick }: OrgTreeViewProps) {
     const nodesMap = new Map<string, Node>();
     const edgesArr: Edge[] = [];
 
-    // Helper to calculate node position
-    let yOffset = 0;
-    const levelWidth = 220; // horizontal spacing
-    const levelHeight = 140; // vertical spacing
+    // Layout constants
+    const NODE_WIDTH = 200;
+    const NODE_HEIGHT = 140;
+    const HORIZONTAL_SPACING = 50;
+    const VERTICAL_SPACING = 150;
 
-    function buildNode(emp: OrgEmployee, level: number, parentId: string | null, index: number): void {
-      const nodeId = emp.employeeId;
+    interface TreeNode {
+      employee: OrgEmployee;
+      children: TreeNode[];
+      x: number;
+      y: number;
+      subtreeWidth: number;
+    }
+
+    // Build tree structure
+    function buildTreeStructure(emp: OrgEmployee, depth: number): TreeNode {
+      const children = employees.filter((e) => e.managerId === emp.employeeId);
+      const childNodes = children.map((child) => buildTreeStructure(child, depth + 1));
+
+      return {
+        employee: emp,
+        children: childNodes,
+        x: 0,
+        y: depth * VERTICAL_SPACING,
+        subtreeWidth: 0,
+      };
+    }
+
+    // Calculate positions using post-order traversal
+    function calculatePositions(node: TreeNode): number {
+      if (node.children.length === 0) {
+        // Leaf node
+        node.subtreeWidth = NODE_WIDTH;
+        return NODE_WIDTH;
+      }
+
+      // Position children first (post-order)
+      let childrenTotalWidth = 0;
+      let currentX = 0;
+
+      for (const child of node.children) {
+        const childWidth = calculatePositions(child);
+        child.x = currentX + childWidth / 2;
+        currentX += childWidth + HORIZONTAL_SPACING;
+        childrenTotalWidth += childWidth;
+      }
+
+      // Add spacing between children
+      childrenTotalWidth += HORIZONTAL_SPACING * (node.children.length - 1);
+
+      // Center parent above children
+      const firstChildX = node.children[0].x;
+      const lastChildX = node.children[node.children.length - 1].x;
+      node.x = (firstChildX + lastChildX) / 2;
+
+      // Subtree width is the max of parent width and children width
+      node.subtreeWidth = Math.max(NODE_WIDTH, childrenTotalWidth);
+
+      return node.subtreeWidth;
+    }
+
+    // Shift entire tree to ensure no negative x values
+    function shiftTree(node: TreeNode, offsetX: number): void {
+      node.x += offsetX;
+      for (const child of node.children) {
+        shiftTree(child, offsetX);
+      }
+    }
+
+    // Find minimum x value in tree
+    function findMinX(node: TreeNode): number {
+      let minX = node.x;
+      for (const child of node.children) {
+        minX = Math.min(minX, findMinX(child));
+      }
+      return minX;
+    }
+
+    // Convert tree to ReactFlow nodes and edges
+    function treeToReactFlow(node: TreeNode, parentId: string | null): void {
+      const nodeId = node.employee.employeeId;
 
       nodesMap.set(nodeId, {
         id: nodeId,
         type: 'employee',
-        position: { x: level * levelWidth, y: yOffset },
+        position: { x: node.x - NODE_WIDTH / 2, y: node.y },
         data: {
-          employeeId: emp.employeeId,
-          name: emp.name,
-          department: emp.department?.name,
-          agents: emp.agents,
-          totalCost: emp.totalCost,
-          activeAgents: emp.activeAgents,
+          employeeId: node.employee.employeeId,
+          name: node.employee.name,
+          designation: node.employee.designation?.name,
+          department: node.employee.department?.name,
+          agents: node.employee.agents,
+          totalCost: node.employee.totalCost,
+          activeAgents: node.employee.activeAgents,
           onAgentClick,
         },
         sourcePosition: Position.Bottom,
@@ -137,20 +212,39 @@ export function OrgTreeView({ employees, onAgentClick }: OrgTreeViewProps) {
         });
       }
 
-      yOffset += levelHeight;
-
-      // Recursively build children
-      const children = employees.filter((e) => e.managerId === emp.employeeId);
-      children.forEach((child, idx) => {
-        buildNode(child, level + 1, nodeId, idx);
-      });
+      // Process children
+      for (const child of node.children) {
+        treeToReactFlow(child, nodeId);
+      }
     }
 
     // Find root nodes (no manager)
     const roots = employees.filter((e) => !e.managerId);
-    roots.forEach((root, idx) => {
-      buildNode(root, 0, null, idx);
-    });
+    
+    if (roots.length === 0) {
+      return { nodes: [], edges: [] };
+    }
+
+    // Process each root (typically just one CEO)
+    let horizontalOffset = 100; // Starting padding
+
+    for (const root of roots) {
+      // Build tree structure
+      const tree = buildTreeStructure(root, 0);
+
+      // Calculate positions (post-order traversal)
+      calculatePositions(tree);
+
+      // Find minimum x and shift to ensure positive coordinates
+      const minX = findMinX(tree);
+      shiftTree(tree, -minX + horizontalOffset);
+
+      // Convert to ReactFlow format
+      treeToReactFlow(tree, null);
+
+      // Update offset for next root (if multiple)
+      horizontalOffset += tree.subtreeWidth + 200;
+    }
 
     return { nodes: Array.from(nodesMap.values()), edges: edgesArr };
   }, [employees, onAgentClick]);
