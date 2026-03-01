@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { AgentSelector } from '@/components/command-center/agent-selector';
 import { ChatInterface } from '@/components/command-center/chat-interface';
 import { LiveActivitySidebar } from '@/components/command-center/live-activity-sidebar';
-import { useInstruct, useTraceStream } from '@/hooks/use-command-center';
+import { useInstruct, useExecuteMulti, useTraceStream } from '@/hooks/use-command-center';
 import { useApiKeyStatus } from '@/hooks/use-api-key';
 import { ApiError } from '@/lib/api';
 import type { StreamMessage } from '@/hooks/use-command-center';
@@ -22,12 +22,10 @@ export default function CommandCenterPage() {
   const [traceId, setTraceId] = useState<string | null>(null);
   const [messages, setMessages] = useState<StreamMessage[]>([]);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
-  
-  // For now, use first selected agent for instruct (we'll handle multi-agent later)
-  const selectedAgentId = selectedAgentIds[0] || null;
 
   const { data: keyStatus, isLoading: keyLoading, error: keyError, refetch: refetchKey } = useApiKeyStatus();
-  const instruct = useInstruct(selectedAgentId);
+  const instruct = useInstruct(selectedAgentIds[0] || null);
+  const executeMulti = useExecuteMulti();
   const { events, totalCost, isCompleted, tasks, reset } = useTraceStream(traceId);
 
   const hasValidKey = keyStatus?.hasKey && keyStatus?.isValid;
@@ -43,7 +41,7 @@ export default function CommandCenterPage() {
 
   const handleSend = useCallback(
     (instruction: string) => {
-      if (!selectedAgentId || !hasValidKey) return;
+      if (selectedAgentIds.length === 0 || !hasValidKey) return;
 
       const userMsg: StreamMessage = {
         id: Math.random().toString(36).slice(2) + Date.now().toString(36),
@@ -54,18 +52,37 @@ export default function CommandCenterPage() {
       setMessages((prev) => [...prev, userMsg]);
       setApiKeyError(null);
 
-      instruct.mutate(instruction, {
-        onSuccess: (data) => {
-          setTraceId(data.traceId);
-        },
-        onError: (err) => {
-          if (err instanceof ApiError && err.status === 403) {
-            setApiKeyError('Your API key is invalid or expired. Please update it in settings.');
+      // Multi-agent execution
+      if (selectedAgentIds.length > 1) {
+        executeMulti.mutate(
+          { agentIds: selectedAgentIds, instruction, mode: executionMode },
+          {
+            onSuccess: (data) => {
+              setTraceId(data.traceId);
+            },
+            onError: (err) => {
+              if (err instanceof ApiError && err.status === 403) {
+                setApiKeyError('Your API key is invalid or expired. Please update it in settings.');
+              }
+            },
           }
-        },
-      });
+        );
+      } 
+      // Single agent execution
+      else {
+        instruct.mutate(instruction, {
+          onSuccess: (data) => {
+            setTraceId(data.traceId);
+          },
+          onError: (err) => {
+            if (err instanceof ApiError && err.status === 403) {
+              setApiKeyError('Your API key is invalid or expired. Please update it in settings.');
+            }
+          },
+        });
+      }
     },
-    [selectedAgentId, hasValidKey, instruct]
+    [selectedAgentIds, hasValidKey, executionMode, instruct, executeMulti]
   );
 
   // Loading state
@@ -128,7 +145,7 @@ export default function CommandCenterPage() {
         events={events}
         totalCost={totalCost}
         isCompleted={isCompleted}
-        isLoading={instruct.isPending || (!!traceId && !isCompleted)}
+        isLoading={instruct.isPending || executeMulti.isPending || (!!traceId && !isCompleted)}
         onSend={handleSend}
         disabled={selectedAgentIds.length === 0 || !!apiKeyError}
       />
@@ -136,7 +153,7 @@ export default function CommandCenterPage() {
       <LiveActivitySidebar 
         events={events}
         totalCost={totalCost}
-        isActive={instruct.isPending || (!!traceId && !isCompleted)}
+        isActive={instruct.isPending || executeMulti.isPending || (!!traceId && !isCompleted)}
       />
     </div>
   );
