@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Send, Loader2, User, Square } from 'lucide-react';
+import { Send, Loader2, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/lib/api';
@@ -13,11 +13,10 @@ import { CostDisplay, ConversationCostData } from './cost-display';
 interface ChatInterfaceProps {
   selectedAgentId: string | null;
   messages: Array<{ id: string; role: 'user' | 'assistant'; content: string; timestamp: string }>;
-  isStreaming: boolean;
-  streamingContent: string;
+  isLoading: boolean;
+  response: string | null;
   conversationCost: ConversationCostData | null;
   onSend: (message: string) => void;
-  onStopGenerating: () => void;
   disabled?: boolean;
   error?: string | null;
 }
@@ -109,11 +108,10 @@ function ThinkingIndicator({ agentName, agentEmoji }: { agentName: string; agent
 export function ChatInterface({
   selectedAgentId,
   messages,
-  isStreaming,
-  streamingContent,
+  isLoading,
+  response,
   conversationCost,
   onSend,
-  onStopGenerating,
   disabled,
   error,
 }: ChatInterfaceProps) {
@@ -133,7 +131,7 @@ export function ChatInterface({
   const agentName = selectedAgent?.name || 'Agent';
   const agentEmoji = selectedAgent?.emoji || '🤖';
 
-  // Auto-scroll on new messages/streaming content
+  // Auto-scroll on new messages
   useEffect(() => {
     const el = scrollRef.current;
     if (el) {
@@ -142,12 +140,12 @@ export function ChatInterface({
         el.scrollTop = el.scrollHeight;
       }, 50);
     }
-  }, [messages.length, streamingContent, isStreaming]);
+  }, [messages.length, isLoading]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const text = input.trim();
-    if (!text || isStreaming || disabled) return;
+    if (!text || isLoading || disabled) return;
     onSend(text);
     setInput('');
   };
@@ -158,8 +156,6 @@ export function ChatInterface({
       handleSubmit(e as any);
     }
   };
-
-  const hasWaitingForFirstChunk = isStreaming && !streamingContent;
 
   return (
     <div className="flex flex-1 flex-col min-w-0 bg-background">
@@ -176,7 +172,7 @@ export function ChatInterface({
       {/* Message stream */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl space-y-6 p-6 pb-8">
-          {messages.length === 0 && !isStreaming && (
+          {messages.length === 0 && !isLoading && (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <div className="text-6xl mb-4">{selectedAgentId ? agentEmoji : '💬'}</div>
               <h3 className="text-xl font-semibold text-foreground">
@@ -206,20 +202,9 @@ export function ChatInterface({
             )
           )}
 
-          {/* Show "Thinking..." while waiting for first chunk */}
-          {hasWaitingForFirstChunk && (
+          {/* Show "Thinking..." while loading */}
+          {isLoading && (
             <ThinkingIndicator agentName={agentName} agentEmoji={agentEmoji} />
-          )}
-
-          {/* Show streaming message */}
-          {isStreaming && streamingContent && (
-            <AgentMessage
-              content={streamingContent}
-              timestamp={new Date().toISOString()}
-              agentName={agentName}
-              agentEmoji={agentEmoji}
-              isStreaming={true}
-            />
           )}
 
           {/* Error message */}
@@ -250,33 +235,20 @@ export function ChatInterface({
               onKeyDown={handleKeyDown}
               placeholder="Type your message..."
               className="min-h-[56px] max-h-40 resize-none text-[15px] shadow-sm"
-              disabled={disabled || isStreaming}
+              disabled={disabled || isLoading}
               rows={1}
             />
-            {isStreaming ? (
-              <Button
-                type="button"
-                size="icon"
-                variant="destructive"
-                onClick={onStopGenerating}
-                className="h-[56px] w-[56px] shrink-0 shadow-sm"
-                title="Stop generating"
-              >
-                <Square className="h-5 w-5" />
-              </Button>
-            ) : (
-              <Button
-                type="submit"
-                size="icon"
-                disabled={!input.trim() || disabled}
-                className="h-[56px] w-[56px] shrink-0 shadow-sm"
-              >
-                <Send className="h-5 w-5" />
-              </Button>
-            )}
+            <Button
+              type="submit"
+              size="icon"
+              disabled={!input.trim() || disabled || isLoading}
+              className="h-[56px] w-[56px] shrink-0 shadow-sm"
+            >
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+            </Button>
           </div>
           <p className="mx-auto max-w-3xl mt-2 text-[11px] text-muted-foreground text-center">
-            {isStreaming ? 'Click stop to interrupt generation' : 'Press Enter to send • Shift+Enter for new line'}
+            Press Enter to send • Shift+Enter for new line
           </p>
         </form>
       </div>
