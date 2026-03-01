@@ -17,18 +17,6 @@ export function QuickActions() {
       href: '/attendance',
       variant: isCheckedIn ? 'outline' : 'default',
     },
-    {
-      label: 'Apply Leave',
-      icon: Calendar,
-      href: '/leave/apply',
-      variant: 'outline',
-    },
-    {
-      label: 'View Payslip',
-      icon: FileText,
-      href: '/payroll',
-      variant: 'outline',
-    },
   ] as const;
 
   return (

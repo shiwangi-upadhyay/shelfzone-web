@@ -33,9 +33,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bot, Plus, Loader2, Activity, AlertCircle, Pause, Archive, GitBranch, List } from 'lucide-react';
+import { Bot, Plus, Loader2, Activity, AlertCircle, Pause, Archive, GitBranch, List, Network } from 'lucide-react';
 import { toast } from 'sonner';
 import { AgentHierarchy } from '@/components/agents/agent-hierarchy';
+import { AgentFlowDiagram } from '@/components/agents/agent-flow-diagram';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 
@@ -207,6 +208,10 @@ export default function AgentsPage() {
             <GitBranch className="h-4 w-4" />
             Hierarchy
           </TabsTrigger>
+          <TabsTrigger value="flow" className="gap-2">
+            <Network className="h-4 w-4" />
+            Flow View
+          </TabsTrigger>
           <TabsTrigger value="list" className="gap-2">
             <List className="h-4 w-4" />
             List View
@@ -215,6 +220,10 @@ export default function AgentsPage() {
 
         <TabsContent value="hierarchy">
           <AgentHierarchy />
+        </TabsContent>
+
+        <TabsContent value="flow">
+          <AgentFlowDiagram />
         </TabsContent>
 
         <TabsContent value="list" className="space-y-4">
