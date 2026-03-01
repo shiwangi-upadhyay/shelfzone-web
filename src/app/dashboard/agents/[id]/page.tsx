@@ -32,6 +32,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { CardGridSkeleton } from '@/components/ui/card-grid-skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 
 interface AgentDetail {
   id: string;
@@ -93,7 +95,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const { id } = use(params);
   const queryClient = useQueryClient();
 
-  const { data: agentData, isLoading } = useQuery({
+  const { data: agentData, isLoading, error, refetch } = useQuery({
     queryKey: ['agent', id],
     queryFn: () => api.get<any>(`/api/agent-portal/agents/${id}/detail`),
   });
@@ -145,12 +147,27 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const apiKeys = (keysData?.data || []) as ApiKey[];
   const configLogs = (configData?.data || []) as ConfigLog[];
 
+  // Loading state
   if (isLoading) {
     return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard/agents">
+            <Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button>
+          </Link>
+          <div className="flex-1">
+            <div className="h-8 w-48 animate-pulse rounded bg-muted mb-2" />
+            <div className="h-4 w-64 animate-pulse rounded bg-muted" />
+          </div>
+        </div>
+        <CardGridSkeleton count={4} />
       </div>
     );
+  }
+
+  // Error state
+  if (error) {
+    return <ErrorState title="Failed to load agent" message="Unable to load agent details. Please try again." onRetry={refetch} />;
   }
 
   if (!agent) {

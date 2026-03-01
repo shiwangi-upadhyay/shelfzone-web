@@ -4,20 +4,21 @@ import { useDashboard, useUnreadCount } from '@/hooks/use-dashboard';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { QuickActions } from '@/components/dashboard/quick-actions';
 import { ActivityFeed } from '@/components/dashboard/activity-feed';
+import { CardGridSkeleton } from '@/components/ui/card-grid-skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 import { 
   Clock, 
   Calendar, 
   DollarSign, 
-  Bell,
-  AlertCircle 
+  Bell
 } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function DashboardPage() {
-  const { data: dashboard, isLoading, error } = useDashboard();
+  const { data: dashboard, isLoading, error, refetch } = useDashboard();
   const { data: unreadData } = useUnreadCount();
 
-  if (error) {
+  // Loading state
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <div>
@@ -26,14 +27,14 @@ export default function DashboardPage() {
             Welcome to ShelfZone HR Portal
           </p>
         </div>
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Failed to load dashboard data. Please try again later.
-          </AlertDescription>
-        </Alert>
+        <CardGridSkeleton count={4} />
       </div>
     );
+  }
+
+  // Error state
+  if (error) {
+    return <ErrorState title="Failed to load dashboard" message="Unable to load dashboard data. Please try again." onRetry={refetch} />;
   }
 
   const attendanceValue = 

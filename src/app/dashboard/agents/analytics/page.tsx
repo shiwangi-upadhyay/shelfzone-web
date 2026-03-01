@@ -23,6 +23,8 @@ import {
   Clock,
   AlertTriangle,
 } from 'lucide-react';
+import { CardGridSkeleton } from '@/components/ui/card-grid-skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 
 interface PlatformAnalytics {
   totalAgents: number;
@@ -42,7 +44,7 @@ interface PlatformAnalytics {
 }
 
 export default function AnalyticsPage() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['agent-analytics'],
     queryFn: () => api.get<any>('/api/agent-portal/analytics/platform'),
   });
@@ -52,12 +54,23 @@ export default function AnalyticsPage() {
     queryFn: () => api.get<any>('/api/agent-portal/agents'),
   });
 
+  // Loading state
   if (isLoading) {
     return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Agent Analytics</h1>
+          <p className="text-muted-foreground">Platform-wide performance metrics</p>
+        </div>
+        <CardGridSkeleton count={4} />
+        <CardGridSkeleton count={3} />
       </div>
     );
+  }
+
+  // Error state
+  if (error) {
+    return <ErrorState title="Failed to load analytics" message="Unable to load analytics data. Please try again." onRetry={refetch} />;
   }
 
   const analytics = data?.data;

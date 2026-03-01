@@ -13,6 +13,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { DollarSign, Loader2, TrendingUp, PieChart } from 'lucide-react';
+import { CardGridSkeleton } from '@/components/ui/card-grid-skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 
 interface PlatformCosts {
   totalCost: number;
@@ -29,17 +31,27 @@ interface PlatformCosts {
 }
 
 export default function CostsPage() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['agent-costs'],
     queryFn: () => api.get<any>('/api/agent-portal/costs/platform'),
   });
 
+  // Loading state
   if (isLoading) {
     return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Cost Analysis</h1>
+          <p className="text-muted-foreground">Detailed cost breakdown across all agents</p>
+        </div>
+        <CardGridSkeleton count={3} />
       </div>
     );
+  }
+
+  // Error state
+  if (error) {
+    return <ErrorState title="Failed to load costs" message="Unable to load cost data. Please try again." onRetry={refetch} />;
   }
 
   const costs = data;

@@ -25,6 +25,8 @@ import {
 } from '@/components/ui/table';
 import { Users, Plus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 
 interface Team {
   id: string;
@@ -43,7 +45,7 @@ export default function TeamsPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['agent-teams'],
     queryFn: () => api.get<any>('/api/agent-portal/teams'),
   });
@@ -67,6 +69,11 @@ export default function TeamsPage() {
   };
 
   const teams = data?.data || [];
+
+  // Error state
+  if (error) {
+    return <ErrorState title="Failed to load teams" message="Unable to load team data. Please try again." onRetry={refetch} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -110,9 +117,7 @@ export default function TeamsPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <TableSkeleton rows={5} columns={5} />
           ) : teams.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No teams yet. Create one to organize your agents.</p>
           ) : (

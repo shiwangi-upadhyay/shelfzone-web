@@ -10,6 +10,7 @@ import { AgentBadge, StatusDot } from './agent-badge';
 import { AgentTree } from './agent-tree';
 import { AgentDetailPanel } from './agent-detail-panel';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 import { cn } from '@/lib/utils';
 
 export function AgentMap() {
@@ -24,8 +25,8 @@ export function AgentMap() {
     name: string; id: string | null; sessionId: string | null; status?: string;
   }>({ name: '', id: null, sessionId: null });
 
-  const { data: employees, isLoading: empLoading } = useOrgAgentOverview();
-  const { data: traces, isLoading: tracesLoading } = useTraces({
+  const { data: employees, isLoading: empLoading, error: empError, refetch: refetchEmp } = useOrgAgentOverview();
+  const { data: traces, isLoading: tracesLoading, error: tracesError } = useTraces({
     status: statusFilter === 'all' ? undefined : statusFilter,
     search: search || undefined,
     limit: 10,
@@ -120,7 +121,9 @@ export function AgentMap() {
       </div>
 
       {/* Content */}
-      {empLoading ? (
+      {empError ? (
+        <ErrorState title="Failed to load agent data" message="Unable to load organization data. Please try again." onRetry={refetchEmp} />
+      ) : empLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-28 w-full rounded-lg" />

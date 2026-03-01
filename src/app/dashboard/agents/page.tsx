@@ -36,6 +36,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bot, Plus, Loader2, Activity, AlertCircle, Pause, Archive, GitBranch, List } from 'lucide-react';
 import { toast } from 'sonner';
 import { AgentHierarchy } from '@/components/agents/agent-hierarchy';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 
 interface Agent {
   id: string;
@@ -82,7 +84,7 @@ export default function AgentsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['agents', statusFilter],
     queryFn: () => {
       const params = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
@@ -132,6 +134,11 @@ export default function AgentsPage() {
   const agents = ((data as any)?.data || []).filter((a: any) =>
     search ? a.name.toLowerCase().includes(search.toLowerCase()) : true
   );
+
+  // Error state
+  if (error) {
+    return <ErrorState title="Failed to load agents" message="Unable to load agent data. Please try again." onRetry={refetch} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -241,9 +248,7 @@ export default function AgentsPage() {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
+                <TableSkeleton rows={5} columns={7} />
               ) : agents.length === 0 ? (
                 <div className="text-center py-12">
                   <Bot className="mx-auto h-12 w-12 text-muted-foreground/30" />
