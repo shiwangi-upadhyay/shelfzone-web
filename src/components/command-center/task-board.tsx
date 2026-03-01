@@ -43,7 +43,7 @@ function TaskItem({ task }: { task: TaskNode }) {
           <Clock className="h-3 w-3" />
           {elapsed(task.startedAt, task.completedAt)}
         </span>
-        <span>${task.cost.toFixed(4)}</span>
+        <span>${(Number(task.cost) || 0).toFixed(4)}</span>
       </div>
       {task.instruction && (
         <p className="text-xs text-muted-foreground truncate">{task.instruction}</p>

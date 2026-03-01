@@ -1,0 +1,26 @@
+
+> shelfzone-web-temp@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://157.10.98.227:3000
+- Environments: .env.local
+
+✓ Starting...
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+✓ Ready in 1113ms
+ GET /dashboard/agent-trace 200 in 1506ms (compile: 925ms, proxy.ts: 90ms, render: 492ms)
+ GET /dashboard/agent-trace/trace/cmm7l0jyk0039r8f3385qymzl 200 in 739ms (compile: 696ms, proxy.ts: 8ms, render: 36ms)
+ GET /dashboard/agent-trace 200 in 32ms (compile: 6ms, proxy.ts: 4ms, render: 22ms)
+ GET /dashboard/agents/costs 200 in 93ms (compile: 49ms, proxy.ts: 5ms, render: 39ms)
+ GET /dashboard/agents/budgets 200 in 71ms (compile: 40ms, proxy.ts: 6ms, render: 25ms)
+ GET /dashboard/agents/analytics 200 in 65ms (compile: 37ms, proxy.ts: 5ms, render: 23ms)
+ GET /dashboard/agents/teams 200 in 69ms (compile: 39ms, proxy.ts: 6ms, render: 24ms)
+ GET /dashboard/agents 200 in 59ms (compile: 33ms, proxy.ts: 4ms, render: 22ms)
+ GET /dashboard/agents/d12883c4-35b0-4cf2-93a6-cdb019c33aed 200 in 639ms (compile: 594ms, proxy.ts: 5ms, render: 39ms)
+ GET /dashboard/agents/analytics 200 in 28ms (compile: 6ms, proxy.ts: 5ms, render: 17ms)
+ GET /dashboard/agents/command 200 in 45ms (compile: 17ms, proxy.ts: 3ms, render: 25ms)
+ GET /dashboard/agent-trace 200 in 31ms (compile: 3ms, proxy.ts: 3ms, render: 24ms)
+✓ Compiled in 89ms
+[?25h

@@ -1,0 +1,60 @@
+
+> shelfzone-web-temp@0.1.0 build
+> next build
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 5.3s
+  Running TypeScript ...
+  Collecting page data using 31 workers ...
+  Generating static pages using 31 workers (0/31) ...
+  Generating static pages using 31 workers (7/31) 
+  Generating static pages using 31 workers (15/31) 
+  Generating static pages using 31 workers (23/31) 
+✓ Generating static pages using 31 workers (31/31) in 533.3ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /dashboard
+├ ○ /dashboard/agent-trace
+├ ƒ /dashboard/agent-trace/trace/[traceId]
+├ ○ /dashboard/agents
+├ ƒ /dashboard/agents/[id]
+├ ○ /dashboard/agents/analytics
+├ ○ /dashboard/agents/audit
+├ ○ /dashboard/agents/budgets
+├ ○ /dashboard/agents/command
+├ ○ /dashboard/agents/commands
+├ ○ /dashboard/agents/costs
+├ ○ /dashboard/agents/requests
+├ ○ /dashboard/agents/teams
+├ ○ /dashboard/attendance
+├ ○ /dashboard/billing
+├ ○ /dashboard/departments
+├ ○ /dashboard/designations
+├ ○ /dashboard/employees
+├ ƒ /dashboard/employees/[id]
+├ ○ /dashboard/employees/new
+├ ○ /dashboard/leave
+├ ○ /dashboard/leave/apply
+├ ○ /dashboard/notifications
+├ ○ /dashboard/payroll
+├ ƒ /dashboard/payroll/[id]
+├ ○ /dashboard/profile
+├ ○ /dashboard/settings/api-keys
+├ ○ /dashboard/settings/gateway
+├ ○ /forgot-password
+├ ○ /login
+└ ○ /register
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
