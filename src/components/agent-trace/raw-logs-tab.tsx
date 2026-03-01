@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useSessionEvents } from '@/hooks/use-session-events';
+import { useAgentSessions } from '@/hooks/use-agent-sessions';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,8 +23,14 @@ const TYPE_COLORS: Record<string, string> = {
   message_out: 'text-cyan-400',
 };
 
-export function RawLogsTab({ sessionId }: { sessionId: string | null }) {
-  const { data: events, isLoading } = useSessionEvents(sessionId);
+export function RawLogsTab({ sessionId, agentId }: { sessionId: string | null; agentId: string | null }) {
+  // If sessionId is provided, use it directly
+  // Otherwise, fetch most recent session for the agent
+  const { data: sessions, isLoading: sessionsLoading } = useAgentSessions(sessionId ? null : agentId, { limit: 1 });
+  const resolvedSessionId = sessionId || (sessions && sessions[0]?.id) || null;
+  
+  const { data: events, isLoading: eventsLoading } = useSessionEvents(resolvedSessionId);
+  const isLoading = sessionId ? eventsLoading : (sessionsLoading || eventsLoading);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
