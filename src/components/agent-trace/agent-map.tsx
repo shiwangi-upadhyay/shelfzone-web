@@ -51,21 +51,15 @@ export function AgentMap() {
 
   const departmentNames = useMemo(() => [...departments.keys()].sort(), [departments]);
 
-  // Filter employees
-  const filteredDepartments = useMemo(() => {
-    const result = new Map<string, OrgEmployee[]>();
-    departments.forEach((emps, dept) => {
-      if (departmentFilter !== 'all' && dept !== departmentFilter) return;
-      const filtered = emps.filter(emp => {
-        if (!search) return true;
-        const q = search.toLowerCase();
-        return emp.name.toLowerCase().includes(q) ||
-          emp.agents.some(a => a.name.toLowerCase().includes(q));
-      });
-      if (filtered.length > 0) result.set(dept, filtered);
-    });
-    return result;
-  }, [departments, departmentFilter, search]);
+  // Filter employees for search (but pass all to views for proper tree structure)
+  const filteredEmployees = useMemo(() => {
+    if (!search) return employees || [];
+    const q = search.toLowerCase();
+    return (employees || []).filter(emp => 
+      emp.name.toLowerCase().includes(q) ||
+      emp.agents.some(a => a.name.toLowerCase().includes(q))
+    );
+  }, [employees, search]);
 
   return (
     <div className="space-y-6">
@@ -93,23 +87,16 @@ export function AgentMap() {
           ))}
         </div>
       ) : view === 'org' ? (
-        /* ─── ORG VIEW ─── */
+        /* ─── ORG VIEW - Pure org chart (NO agents) ─── */
         <OrgTreeView
-          employees={[...filteredDepartments.values()].flat()}
-          onAgentClick={(agentId, agentName, status) => openPanel(agentName, agentId, null, status)}
+          employees={filteredEmployees}
+          departmentFilter={departmentFilter}
         />
       ) : (
-        /* ─── AGENT VIEW ─── */
+        /* ─── AGENT VIEW - Only employees with agents ─── */
         <AgentTreeView
-          employees={(employees || [])
-            .filter(emp => emp.agents.length > 0)
-            .filter(emp => {
-              if (departmentFilter !== 'all' && emp.department?.name !== departmentFilter) return false;
-              if (!search) return true;
-              const q = search.toLowerCase();
-              return emp.name.toLowerCase().includes(q) ||
-                emp.agents.some(a => a.name.toLowerCase().includes(q));
-            })}
+          employees={filteredEmployees}
+          departmentFilter={departmentFilter}
           onAgentClick={(agentId, agentName, status) => openPanel(agentName, agentId, null, status)}
         />
       )}

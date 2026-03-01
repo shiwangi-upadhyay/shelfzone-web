@@ -99,30 +99,44 @@ const nodeTypes = {
 
 interface AgentTreeViewProps {
   employees: OrgEmployee[];
+  departmentFilter: string; // 'all' or specific department name
   onAgentClick: (agentId: string, agentName: string, status: string) => void;
 }
 
-export function AgentTreeView({ employees, onAgentClick }: AgentTreeViewProps) {
+export function AgentTreeView({ employees, departmentFilter, onAgentClick }: AgentTreeViewProps) {
   // Build agent-focused tree
   const { nodes, edges } = useMemo(() => {
     const nodesArr: Node[] = [];
     const edgesArr: Edge[] = [];
 
-    let yOffset = 0;
-    const employeeSpacing = 200; // vertical spacing between employee groups
-    const agentSpacing = 100; // vertical spacing between agents
+    // Layout constants
+    const EMPLOYEE_GROUP_SPACING = 350; // horizontal spacing between employee groups
+    const AGENT_SPACING = 180; // horizontal spacing between agents
+    const VERTICAL_SPACING = 120; // vertical spacing from employee to agents
 
-    // Filter employees who have agents
-    const employeesWithAgents = employees.filter((emp) => emp.agents.length > 0);
+    // Filter employees who have agents AND match department filter
+    const employeesWithAgents = employees
+      .filter((emp) => emp.agents.length > 0)
+      .filter((emp) => {
+        if (departmentFilter === 'all') return true;
+        return emp.department?.name === departmentFilter;
+      });
 
+    // Layout employees side-by-side
     employeesWithAgents.forEach((emp, empIdx) => {
       const empNodeId = `emp-${emp.employeeId}`;
+      const groupBaseX = empIdx * EMPLOYEE_GROUP_SPACING;
+      
+      // Calculate employee X position (center of their agents)
+      const agentCount = emp.agents.length;
+      const agentsTotalWidth = (agentCount - 1) * AGENT_SPACING;
+      const employeeX = groupBaseX + agentsTotalWidth / 2;
 
       // Employee node
       nodesArr.push({
         id: empNodeId,
         type: 'employee',
-        position: { x: 0, y: yOffset },
+        position: { x: employeeX, y: 0 },
         data: {
           type: 'employee',
           employeeId: emp.employeeId,
@@ -134,22 +148,22 @@ export function AgentTreeView({ employees, onAgentClick }: AgentTreeViewProps) {
         targetPosition: Position.Top,
       });
 
-      yOffset += agentSpacing;
-
-      // Agent nodes
+      // Agent nodes (spread horizontally below employee)
       emp.agents.forEach((agent, agentIdx) => {
         const agentNodeId = `agent-${agent.id}`;
+        const agentX = groupBaseX + agentIdx * AGENT_SPACING;
 
         nodesArr.push({
           id: agentNodeId,
           type: 'agent',
-          position: { x: agentIdx * 180, y: yOffset },
+          position: { x: agentX, y: VERTICAL_SPACING },
           data: {
             type: 'agent',
             agentId: agent.id,
             name: agent.name,
             status: agent.status,
             cost: agent.totalCost,
+            model: undefined, // TODO: Backend needs to provide model field in agent data
             onAgentClick,
           },
           sourcePosition: Position.Bottom,
@@ -171,12 +185,10 @@ export function AgentTreeView({ employees, onAgentClick }: AgentTreeViewProps) {
           },
         });
       });
-
-      yOffset += employeeSpacing;
     });
 
     return { nodes: nodesArr, edges: edgesArr };
-  }, [employees, onAgentClick]);
+  }, [employees, departmentFilter, onAgentClick]);
 
   if (nodes.length === 0) {
     return (

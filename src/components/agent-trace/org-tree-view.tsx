@@ -17,15 +17,10 @@ import { cn } from '@/lib/utils';
 interface EmployeeNodeData {
   employeeId: string;
   name: string;
-  designation?: string;
   department?: string;
-  agents: Array<{ id: string; name: string; status: string; totalCost: number }>;
-  totalCost: number;
-  activeAgents: number;
-  onAgentClick: (agentId: string, agentName: string, status: string) => void;
 }
 
-// Custom employee node component
+// Custom employee node component - Pure org chart (NO agents)
 function EmployeeNode({ data }: { data: EmployeeNodeData }) {
   const initials = data.name
     .split(' ')
@@ -43,42 +38,13 @@ function EmployeeNode({ data }: { data: EmployeeNodeData }) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{data.name}</p>
-          {data.designation && (
-            <p className="text-[10px] text-muted-foreground truncate">{data.designation}</p>
-          )}
         </div>
       </div>
 
-      {/* Stats */}
-      {(data.totalCost > 0 || data.agents.length > 0) && (
-        <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-2 border-t border-border/30">
-          <span className="font-mono tabular-nums">${Number(data.totalCost).toFixed(2)}</span>
-          {data.activeAgents > 0 && (
-            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-              {data.activeAgents} active
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Agent badges */}
-      {data.agents.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-2">
-          {data.agents.map((agent) => (
-            <button
-              key={agent.id}
-              onClick={() => data.onAgentClick(agent.id, agent.name, agent.status)}
-              className={cn(
-                'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium',
-                'border transition-colors',
-                agent.status === 'ACTIVE'
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-400'
-                  : 'bg-muted border-border/60 text-muted-foreground hover:bg-muted/70'
-              )}
-            >
-              🤖 {agent.name}
-            </button>
-          ))}
+      {/* Department */}
+      {data.department && (
+        <div className="text-[10px] text-muted-foreground pt-2 border-t border-border/30">
+          {data.department}
         </div>
       )}
     </div>
@@ -91,10 +57,10 @@ const nodeTypes = {
 
 interface OrgTreeViewProps {
   employees: OrgEmployee[];
-  onAgentClick: (agentId: string, agentName: string, status: string) => void;
+  departmentFilter: string; // 'all' or specific department name
 }
 
-export function OrgTreeView({ employees, onAgentClick }: OrgTreeViewProps) {
+export function OrgTreeView({ employees, departmentFilter }: OrgTreeViewProps) {
   // Build tree hierarchy
   const { nodes, edges } = useMemo(() => {
     const nodesMap = new Map<string, Node>();
@@ -178,9 +144,25 @@ export function OrgTreeView({ employees, onAgentClick }: OrgTreeViewProps) {
       return minX;
     }
 
+    // Check if node or any descendant matches the department filter
+    function shouldShowBranch(node: TreeNode, filter: string): boolean {
+      if (filter === 'all') return true;
+      
+      // Check if this node matches
+      if (node.employee.department?.name === filter) return true;
+      
+      // Check if any child matches (recursive)
+      return node.children.some(child => shouldShowBranch(child, filter));
+    }
+
     // Convert tree to ReactFlow nodes and edges
     function treeToReactFlow(node: TreeNode, parentId: string | null): void {
       const nodeId = node.employee.employeeId;
+      
+      // Check if this branch should be shown based on department filter
+      if (!shouldShowBranch(node, departmentFilter)) {
+        return; // Skip this entire branch
+      }
 
       nodesMap.set(nodeId, {
         id: nodeId,
@@ -189,19 +171,14 @@ export function OrgTreeView({ employees, onAgentClick }: OrgTreeViewProps) {
         data: {
           employeeId: node.employee.employeeId,
           name: node.employee.name,
-          designation: node.employee.designation?.name,
           department: node.employee.department?.name,
-          agents: node.employee.agents,
-          totalCost: node.employee.totalCost,
-          activeAgents: node.employee.activeAgents,
-          onAgentClick,
         },
         sourcePosition: Position.Bottom,
         targetPosition: Position.Top,
       });
 
-      // Create edge from parent
-      if (parentId) {
+      // Create edge from parent (only if parent is also visible)
+      if (parentId && nodesMap.has(parentId)) {
         edgesArr.push({
           id: `${parentId}-${nodeId}`,
           source: parentId,
@@ -247,11 +224,7 @@ export function OrgTreeView({ employees, onAgentClick }: OrgTreeViewProps) {
     }
 
     return { nodes: Array.from(nodesMap.values()), edges: edgesArr };
-  }, [employees, onAgentClick]);
-
-  const handleNodeClick = useCallback((_: unknown, node: Node) => {
-    // Click handled by agent badges
-  }, []);
+  }, [employees, departmentFilter]);
 
   if (nodes.length === 0) {
     return (
@@ -267,7 +240,6 @@ export function OrgTreeView({ employees, onAgentClick }: OrgTreeViewProps) {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
-        onNodeClick={handleNodeClick}
         fitView
         fitViewOptions={{ padding: 0.3, maxZoom: 1 }}
         proOptions={{ hideAttribution: true }}
