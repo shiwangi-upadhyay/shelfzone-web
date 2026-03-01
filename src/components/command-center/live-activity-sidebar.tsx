@@ -198,7 +198,7 @@ export function LiveActivitySidebar({ events, totalCost, isActive }: LiveActivit
           <div className="border-t bg-muted/30 px-4 py-2.5 flex items-center justify-between">
             <span className="text-xs font-semibold text-muted-foreground">Total Cost</span>
             <span className="text-sm font-mono font-bold text-foreground">
-              ${totalCost.toFixed(4)}
+              ${(Number(totalCost) || 0).toFixed(4)}
             </span>
           </div>
         </div>
