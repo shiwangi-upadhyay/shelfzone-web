@@ -11,6 +11,7 @@ import { useInstruct, useTraceStream } from '@/hooks/use-command-center';
 import { useApiKeyStatus } from '@/hooks/use-api-key';
 import { ApiError } from '@/lib/api';
 import type { StreamMessage } from '@/hooks/use-command-center';
+import { ErrorState } from '@/components/ui/error-state';
 
 export default function CommandCenterPage() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function CommandCenterPage() {
   const [messages, setMessages] = useState<StreamMessage[]>([]);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
 
-  const { data: keyStatus, isLoading: keyLoading } = useApiKeyStatus();
+  const { data: keyStatus, isLoading: keyLoading, error: keyError, refetch: refetchKey } = useApiKeyStatus();
   const instruct = useInstruct(selectedAgentId);
   const { events, totalCost, isCompleted, tasks, reset } = useTraceStream(traceId);
 
@@ -68,6 +69,11 @@ export default function CommandCenterPage() {
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-r-transparent" />
       </div>
     );
+  }
+
+  // Error state
+  if (keyError) {
+    return <ErrorState title="Failed to load Command Center" message="Unable to check API key status. Please try again." onRetry={refetchKey} />;
   }
 
   // Gate: no valid key

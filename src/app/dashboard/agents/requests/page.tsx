@@ -35,6 +35,8 @@ import {
 } from '@/components/ui/table';
 import { FileText, Plus, Loader2, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 
 interface AgentRequest {
   id: string;
@@ -95,7 +97,7 @@ export default function AgentRequestsPage() {
   const [reason, setReason] = useState('');
 
   // Fetch requests
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['agent-requests'],
     queryFn: () => api.get<{ data: AgentRequest[] }>('/api/agent-requests'),
   });
@@ -188,6 +190,11 @@ export default function AgentRequestsPage() {
   const requests = data?.data || [];
   const pendingRequests = requests.filter((r) => r.status === 'PENDING');
   const myRequests = isSuperAdmin ? requests : requests.filter((r) => r.requestedBy.id === user?.id);
+
+  // Error state
+  if (error) {
+    return <ErrorState title="Failed to load requests" message="Unable to load agent requests. Please try again." onRetry={refetch} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -377,9 +384,7 @@ export default function AgentRequestsPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <TableSkeleton rows={5} columns={8} />
           ) : myRequests.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="mx-auto h-12 w-12 text-muted-foreground/30" />

@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApiKeyStatus, useSetApiKey, useDeleteApiKey } from '@/hooks/use-api-key';
 import { toast } from 'sonner';
+import { ErrorState } from '@/components/ui/error-state';
 
 export default function ApiKeysSettingsPage() {
-  const { data: status, isLoading } = useApiKeyStatus();
+  const { data: status, isLoading, error, refetch } = useApiKeyStatus();
   const setKey = useSetApiKey();
   const deleteKey = useDeleteApiKey();
 
@@ -42,12 +43,18 @@ export default function ApiKeysSettingsPage() {
     });
   };
 
+  // Loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-r-transparent" />
       </div>
     );
+  }
+
+  // Error state
+  if (error) {
+    return <ErrorState title="Failed to load API key settings" message="Unable to load API key information. Please try again." onRetry={refetch} />;
   }
 
   const hasKey = status?.hasKey ?? false;
