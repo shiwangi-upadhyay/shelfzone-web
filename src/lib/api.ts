@@ -105,7 +105,8 @@ export async function apiRequest<T>(endpoint: string, options: ApiOptions = {}):
   const { skipAuth, headers: customHeaders, ...rest } = options;
 
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
+    // Only set Content-Type if there's a body
+    ...(rest.body ? { 'Content-Type': 'application/json' } : {}),
     ...customHeaders,
   };
 
