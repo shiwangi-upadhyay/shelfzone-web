@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, X, Edit2, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -83,6 +83,47 @@ export function ConversationTabs({ onTabChange }: ConversationTabsProps) {
     setEditingTabId(null);
     setEditingTitle('');
   };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if user is typing in an input/textarea
+      const target = e.target as HTMLElement;
+      const isTyping = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+      if (isTyping) return;
+
+      // Ctrl+N: New tab
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        handleCreateTab();
+        return;
+      }
+
+      // Ctrl+W: Close current tab
+      if ((e.ctrlKey || e.metaKey) && e.key === 'w') {
+        e.preventDefault();
+        if (activeTab && tabs && tabs.length > 1) {
+          if (confirm('Close this tab?')) {
+            deleteTab.mutate(activeTab.id);
+          }
+        }
+        return;
+      }
+
+      // Ctrl+1/2/3: Switch to tab by index
+      if ((e.ctrlKey || e.metaKey) && /^[1-5]$/.test(e.key)) {
+        e.preventDefault();
+        const index = parseInt(e.key) - 1;
+        if (tabs && tabs[index]) {
+          handleSwitchTab(tabs[index].id);
+        }
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [tabs, activeTab, deleteTab]);
 
   if (isLoading) {
     return (

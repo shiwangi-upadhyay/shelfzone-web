@@ -10,6 +10,7 @@ import { ConversationTabs } from '@/components/command-center/conversation-tabs'
 import { DelegationCard } from '@/components/command-center/delegation-card';
 import { ActivitySidebar } from '@/components/command-center/activity-sidebar';
 import { CostBreakdown } from '@/components/command-center/cost-breakdown';
+import { SearchDialog } from '@/components/command-center/search-dialog';
 import { useSendMessage } from '@/hooks/use-command-center-stream';
 import { useDelegation, Delegation } from '@/hooks/use-delegation';
 import { useApiKeyStatus } from '@/hooks/use-api-key';
@@ -34,6 +35,7 @@ export default function CommandCenterPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [currentTabId, setCurrentTabId] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
   
   const { data: keyStatus, isLoading: keyLoading, error: keyError, refetch: refetchKey } = useApiKeyStatus();
   const { sendWithDelegation, isLoading: isDelegating } = useDelegation();
@@ -143,6 +145,37 @@ export default function CommandCenterPage() {
       }
     }
   }, [currentResponse, isStreaming, refetchConversation]); // Deliberately not including messages to avoid infinite loop
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if user is typing in an input/textarea
+      const target = e.target as HTMLElement;
+      const isTyping = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+
+      // Esc: Stop generation (works even when typing)
+      if (e.key === 'Escape' && isStreaming) {
+        stopGenerating();
+        return;
+      }
+
+      // Don't trigger other shortcuts while typing
+      if (isTyping && e.key !== 'Escape') return;
+
+      // Ctrl+K: Search conversations
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+        return;
+      }
+
+      // Note: Ctrl+N (new tab), Ctrl+W (close tab), Ctrl+1/2/3 (switch tabs)
+      // are handled by ConversationTabs component
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isStreaming, stopGenerating]);
 
   const handleSend = useCallback(
     async (message: string) => {
@@ -280,6 +313,9 @@ export default function CommandCenterPage() {
           </div>
         </div>
       </div>
+
+      {/* Search Dialog (Ctrl+K) */}
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </div>
   );
 }
