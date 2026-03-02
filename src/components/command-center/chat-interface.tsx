@@ -13,6 +13,8 @@ import { DelegationCard } from './delegation-card';
 import { Delegation } from '@/hooks/use-delegation';
 import { FileUpload } from './file-upload';
 import { ExportMenu } from './export-menu';
+import { SystemPromptDialog } from './system-prompt-dialog';
+import { Settings } from 'lucide-react';
 
 interface FileAttachment {
   type: 'image' | 'text';
@@ -142,6 +144,7 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
   const [input, setInput] = useState('');
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
+  const [promptDialogOpen, setPromptDialogOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Fetch selected agent info
@@ -278,6 +281,16 @@ export function ChatInterface({
               Talking to: <span className="font-semibold text-foreground">{agentName}</span>
             </p>
             <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPromptDialogOpen(true)}
+                disabled={disabled}
+                className="h-8 gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="text-xs">Prompt</span>
+              </Button>
               <ExportMenu conversationId={conversationId} disabled={disabled || !messages.length} />
               {isStreaming && (
                 <Button
@@ -332,6 +345,14 @@ export function ChatInterface({
           </div>
         </form>
       </div>
+
+      {/* System Prompt Dialog */}
+      <SystemPromptDialog
+        open={promptDialogOpen}
+        onOpenChange={setPromptDialogOpen}
+        agentId={selectedAgentId}
+        agentName={agentName}
+      />
     </div>
   );
 }
