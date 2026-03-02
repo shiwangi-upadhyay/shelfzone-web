@@ -6,6 +6,7 @@ import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AgentSelector } from '@/components/command-center/agent-selector';
 import { ChatInterface } from '@/components/command-center/chat-interface';
+import { ConversationTabs } from '@/components/command-center/conversation-tabs';
 import { useSendMessage } from '@/hooks/use-command-center-stream';
 import { useApiKeyStatus } from '@/hooks/use-api-key';
 import { useAgentConversation } from '@/hooks/use-conversations';
@@ -155,46 +156,58 @@ export default function CommandCenterPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] rounded-xl border bg-background overflow-hidden relative">
-      {/* Error banner */}
-      {streamError && (
-        <div className="absolute top-0 inset-x-0 z-10 bg-red-50 dark:bg-red-950/40 border-b border-red-200 dark:border-red-800 px-4 py-2 text-sm text-red-700 dark:text-red-300 text-center">
-          {streamError}
-          {streamError.includes('API key') && (
-            <>
-              {' '}
-              <button
-                onClick={() => router.push('/dashboard/settings/api-keys')}
-                className="underline font-medium hover:text-red-900 dark:hover:text-red-100"
-              >
-                Update settings
-              </button>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Left Sidebar - Agent List */}
-      <AgentSelector 
-        selectedAgentId={selectedAgentId}
-        onSelectAgent={setSelectedAgentId}
+    <div className="flex flex-col h-[calc(100vh-7rem)] rounded-xl border bg-background overflow-hidden">
+      {/* Conversation Tabs */}
+      <ConversationTabs 
+        onTabChange={(tabId) => {
+          // Tab switching - will clear current chat and load new tab's conversations
+          setMessages([]);
+          setConversationId(null);
+          // Note: Full tab-scoped conversation loading will be implemented in next iteration
+        }}
       />
 
-      {/* Center Panel - Chat */}
-      <ChatInterface
-        selectedAgentId={selectedAgentId}
-        messages={messages}
-        isStreaming={isStreaming}
-        streamingContent={currentResponse}
-        totalCost={totalCost}
-        onSend={handleSend}
-        onStopGenerating={stopGenerating}
-        disabled={!selectedAgentId || !hasValidKey || conversationLoading}
-        error={streamError}
-      />
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Error banner */}
+        {streamError && (
+          <div className="absolute top-0 inset-x-0 z-10 bg-red-50 dark:bg-red-950/40 border-b border-red-200 dark:border-red-800 px-4 py-2 text-sm text-red-700 dark:text-red-300 text-center">
+            {streamError}
+            {streamError.includes('API key') && (
+              <>
+                {' '}
+                <button
+                  onClick={() => router.push('/dashboard/settings/api-keys')}
+                  className="underline font-medium hover:text-red-900 dark:hover:text-red-100"
+                >
+                  Update settings
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
-      {/* Right Sidebar - Hidden for now (Phase 3) */}
-      {/* TODO: Show cost breakdown when totalCost is available */}
+        {/* Left Sidebar - Agent List */}
+        <AgentSelector 
+          selectedAgentId={selectedAgentId}
+          onSelectAgent={setSelectedAgentId}
+        />
+
+        {/* Center Panel - Chat */}
+        <ChatInterface
+          selectedAgentId={selectedAgentId}
+          messages={messages}
+          isStreaming={isStreaming}
+          streamingContent={currentResponse}
+          totalCost={totalCost}
+          onSend={handleSend}
+          onStopGenerating={stopGenerating}
+          disabled={!selectedAgentId || !hasValidKey || conversationLoading}
+          error={streamError}
+        />
+
+        {/* Right Sidebar - Hidden for now (Phase 3) */}
+        {/* TODO: Show cost breakdown when totalCost is available */}
+      </div>
     </div>
   );
 }

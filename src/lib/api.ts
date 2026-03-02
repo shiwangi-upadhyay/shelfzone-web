@@ -188,6 +188,14 @@ export const api = {
     });
   },
   
+  patch: async <T = any>(endpoint: string, data?: any, options?: ApiOptions): Promise<T> => {
+    return apiRequest<T>(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  },
+  
   delete: async <T = any>(endpoint: string, options?: ApiOptions): Promise<T> => {
     return apiRequest<T>(endpoint, { ...options, method: 'DELETE' });
   },
