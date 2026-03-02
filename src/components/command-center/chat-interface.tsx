@@ -12,6 +12,7 @@ import { CostDisplay, ConversationCostData } from './cost-display';
 import { DelegationCard } from './delegation-card';
 import { Delegation } from '@/hooks/use-delegation';
 import { FileUpload } from './file-upload';
+import { ExportMenu } from './export-menu';
 
 interface FileAttachment {
   type: 'image' | 'text';
@@ -26,6 +27,7 @@ interface FileAttachment {
 
 interface ChatInterfaceProps {
   selectedAgentId: string | null;
+  conversationId: string | null;
   messages: Array<{ 
     id: string; 
     role: 'user' | 'assistant'; 
@@ -128,6 +130,7 @@ function ThinkingIndicator({ agentName, agentEmoji }: { agentName: string; agent
 
 export function ChatInterface({
   selectedAgentId,
+  conversationId,
   messages,
   isStreaming,
   streamingContent,
@@ -274,17 +277,20 @@ export function ChatInterface({
             <p className="text-xs text-muted-foreground">
               Talking to: <span className="font-semibold text-foreground">{agentName}</span>
             </p>
-            {isStreaming && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={onStopGenerating}
-                className="h-7 text-xs"
-              >
-                Stop generating
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              <ExportMenu conversationId={conversationId} disabled={disabled || !messages.length} />
+              {isStreaming && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onStopGenerating}
+                  className="h-7 text-xs"
+                >
+                  Stop generating
+                </Button>
+              )}
+            </div>
           </div>
         )}
         <form onSubmit={handleSubmit} className="p-4">

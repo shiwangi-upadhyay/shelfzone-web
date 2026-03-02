@@ -293,6 +293,7 @@ export default function CommandCenterPage() {
         {/* Center Panel - Chat */}
         <ChatInterface
           selectedAgentId={selectedAgentId}
+          conversationId={conversationId}
           messages={messages}
           isStreaming={isStreaming}
           streamingContent={currentResponse}
