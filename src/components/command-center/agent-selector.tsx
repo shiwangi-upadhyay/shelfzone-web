@@ -259,15 +259,15 @@ export function AgentSelector({
                                 <div
                                   className={cn(
                                     'h-full transition-all',
-                                    (share.costUsed / share.costLimit) * 100 < 75 && 'bg-emerald-500',
-                                    (share.costUsed / share.costLimit) * 100 >= 75 && (share.costUsed / share.costLimit) * 100 < 90 && 'bg-amber-500',
-                                    (share.costUsed / share.costLimit) * 100 >= 90 && 'bg-red-500'
+                                    (Number(share.costUsed) / Number(share.costLimit)) * 100 < 75 && 'bg-emerald-500',
+                                    (Number(share.costUsed) / Number(share.costLimit)) * 100 >= 75 && (Number(share.costUsed) / Number(share.costLimit)) * 100 < 90 && 'bg-amber-500',
+                                    (Number(share.costUsed) / Number(share.costLimit)) * 100 >= 90 && 'bg-red-500'
                                   )}
-                                  style={{ width: `${Math.min((share.costUsed / share.costLimit) * 100, 100)}%` }}
+                                  style={{ width: `${Math.min((Number(share.costUsed) / Number(share.costLimit)) * 100, 100)}%` }}
                                 />
                               </div>
                               <p className="text-[9px] text-muted-foreground mt-0.5">
-                                ${share.costUsed.toFixed(4)} / ${share.costLimit.toFixed(2)} spent
+                                ${Number(share.costUsed).toFixed(4)} / ${Number(share.costLimit).toFixed(2)} spent
                               </p>
                             </div>
                           )}
@@ -285,7 +285,7 @@ export function AgentSelector({
                       </p>
                       {share.costLimit && (
                         <p className="text-xs mt-1">
-                          Budget: ${share.costUsed.toFixed(4)} / ${share.costLimit.toFixed(2)}
+                          Budget: ${Number(share.costUsed).toFixed(4)} / ${Number(share.costLimit).toFixed(2)}
                         </p>
                       )}
                     </TooltipContent>
