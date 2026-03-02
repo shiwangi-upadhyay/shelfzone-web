@@ -114,8 +114,8 @@ export function ActivitySidebar() {
   const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    // Get auth token
-    const authData = localStorage.getItem('auth');
+    // Get auth token from localStorage (same format as api.ts)
+    const authData = localStorage.getItem('shelfzone-auth');
     if (!authData) {
       setError('Not authenticated');
       return;
@@ -124,7 +124,11 @@ export function ActivitySidebar() {
     let token: string;
     try {
       const parsed = JSON.parse(authData);
-      token = parsed.token;
+      token = parsed.state?.accessToken;
+      if (!token) {
+        setError('No access token found');
+        return;
+      }
     } catch {
       setError('Invalid auth data');
       return;

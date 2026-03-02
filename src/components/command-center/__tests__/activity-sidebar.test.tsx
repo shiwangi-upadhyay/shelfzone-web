@@ -46,7 +46,12 @@ let mockEventSource: MockEventSource | null = null;
 describe('ActivitySidebar', () => {
   beforeEach(() => {
     mockEventSource = null;
-    localStorage.setItem('auth', JSON.stringify({ token: 'test-token-123' }));
+    localStorage.setItem('shelfzone-auth', JSON.stringify({ 
+      state: { 
+        accessToken: 'test-token-123',
+        refreshToken: 'refresh-token-456'
+      } 
+    }));
   });
 
   afterEach(() => {
