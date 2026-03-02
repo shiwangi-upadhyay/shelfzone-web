@@ -57,8 +57,8 @@ export function ShareAgentDialog({
 
   // Fetch users (employees)
   const { data: usersData, isLoading: usersLoading } = useQuery({
-    queryKey: ['employees'],
-    queryFn: () => api.get<{ data: User[] }>('/api/employees'),
+    queryKey: ['users-for-sharing'],
+    queryFn: () => api.get<{ data: User[] }>('/api/agents/users'),
     enabled: open,
   });
 

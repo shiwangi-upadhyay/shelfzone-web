@@ -2,13 +2,21 @@
 > shelfzone-web-temp@0.1.0 dev
 > next dev
 
-⚠ Port 3000 is in use by an unknown process, using available port 3002 instead.
 ▲ Next.js 16.1.6 (Turbopack)
-- Local:         http://localhost:3002
-- Network:       http://157.10.98.227:3002
+- Local:         http://localhost:3000
+- Network:       http://157.10.98.227:3000
 - Environments: .env.local
 
 ✓ Starting...
-⨯ Unable to acquire lock at /root/.openclaw/workspace/shelfzone-web/.next/dev/lock, is another instance of next dev running?
-  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
-[?25h
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+✓ Ready in 1046ms
+ GET /dashboard/agents/budgets 200 in 1476ms (compile: 337ms, proxy.ts: 70ms, render: 1069ms)
+ GET /dashboard/agents 200 in 1403ms (compile: 640ms, proxy.ts: 5ms, render: 757ms)
+ GET /dashboard/agents/command 200 in 1408ms (compile: 705ms, proxy.ts: 7ms, render: 696ms)
+ GET / 200 in 101ms (compile: 23ms, proxy.ts: 7ms, render: 71ms)
+ GET /dashboard/agents 200 in 118ms (compile: 5ms, proxy.ts: 5ms, render: 108ms)
+ GET /dashboard/agents/agent_frontendbot_7a93b09d5fe6 200 in 559ms (compile: 512ms, proxy.ts: 6ms, render: 41ms)
+ GET /dashboard/agents 200 in 29ms (compile: 4ms, proxy.ts: 5ms, render: 21ms)
+ GET /dashboard/agents/a0000001-0001-4000-8000-000000000001 200 in 96ms (compile: 59ms, proxy.ts: 4ms, render: 33ms)
+ GET /dashboard 200 in 54ms (compile: 29ms, proxy.ts: 6ms, render: 19ms)
+✓ Compiled in 603ms
