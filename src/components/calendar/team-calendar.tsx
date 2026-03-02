@@ -100,11 +100,11 @@ export function TeamCalendar({ selectedMonth, holidays }: TeamCalendarProps) {
     const leave = getEmployeeLeave(employeeId, date);
     const weekend = isWeekend(date);
 
-    if (holiday) return { icon: '🔴', text: 'Holiday' };
-    if (leave) return { icon: '🔵', text: 'On Leave' };
-    if (att && att.status === 'PRESENT') return { icon: '🟢', text: 'Available' };
-    if (weekend) return { icon: '⚪', text: 'Weekend' };
-    return { icon: '⚫', text: 'Unknown' };
+    if (holiday) return 'Holiday';
+    if (leave) return 'On Leave';
+    if (att && att.status === 'PRESENT') return 'Available';
+    if (weekend) return 'Weekend';
+    return '–'; // Em dash for no data
   };
 
   if (employees.length === 0) {
@@ -185,12 +185,9 @@ export function TeamCalendar({ selectedMonth, holidays }: TeamCalendarProps) {
                           getCellColor(emp.id, day)
                         )}
                       >
-                        <div className="flex flex-col items-center gap-1">
-                          <span className="text-lg">{status.icon}</span>
-                          <span className="text-[10px] text-muted-foreground">
-                            {status.text}
-                          </span>
-                        </div>
+                        <span className="text-xs font-medium">
+                          {status}
+                        </span>
                       </td>
                     );
                   })}
