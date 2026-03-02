@@ -27,7 +27,7 @@ export function useActiveTabContexts() {
     queryKey: ['agent-contexts', 'active-tab'],
     queryFn: async () => {
       const response = await api.get<{ data: AgentContext[] }>(
-        '/command-center/contexts/active/tab'
+        '/api/command-center/contexts/active/tab'
       );
       return response.data;
     },
@@ -42,7 +42,7 @@ export function useConversationContexts(conversationId: string | null) {
     queryFn: async () => {
       if (!conversationId) return [];
       const response = await api.get<{ data: AgentContext[] }>(
-        `/command-center/contexts/${conversationId}`
+        `/api/command-center/contexts/${conversationId}`
       );
       return response.data;
     },

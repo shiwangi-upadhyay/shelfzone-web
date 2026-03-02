@@ -33,7 +33,7 @@ export function useConversationTabs() {
     queryKey: ['conversation-tabs'],
     queryFn: async () => {
       const response = await api.get<{ data: ConversationTab[] }>(
-        '/command-center/tabs'
+        '/api/command-center/tabs'
       );
       return response.data;
     },
@@ -46,7 +46,7 @@ export function useActiveTab() {
     queryKey: ['conversation-tabs', 'active'],
     queryFn: async () => {
       const response = await api.get<{ data: ConversationTab | null }>(
-        '/command-center/tabs/active'
+        '/api/command-center/tabs/active'
       );
       return response.data;
     },
@@ -60,7 +60,7 @@ export function useCreateTab() {
   return useMutation({
     mutationFn: async (input: CreateTabInput) => {
       const response = await api.post<{ data: ConversationTab }>(
-        '/command-center/tabs',
+        '/api/command-center/tabs',
         input
       );
       return response.data;
@@ -78,7 +78,7 @@ export function useUpdateTab() {
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateTabInput }) => {
       const response = await api.patch<{ data: ConversationTab }>(
-        `/command-center/tabs/${id}`,
+        `/api/command-center/tabs/${id}`,
         data
       );
       return response.data;
@@ -96,7 +96,7 @@ export function useDeleteTab() {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await api.delete<{ data: { deleted: boolean } }>(
-        `/command-center/tabs/${id}`
+        `/api/command-center/tabs/${id}`
       );
       return response.data;
     },
