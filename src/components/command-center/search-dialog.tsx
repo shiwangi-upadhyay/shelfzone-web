@@ -34,11 +34,14 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
 
     setIsSearching(true);
     try {
-      // TODO: Implement actual search API call (Phase 5.2)
-      // For now, show a placeholder message
-      setResults([]);
+      const { api } = await import('@/lib/api');
+      const response = await api.get<{ data: SearchResult[] }>(
+        `/api/command-center/search?query=${encodeURIComponent(searchQuery)}`
+      );
+      setResults(response.data);
     } catch (error) {
       console.error('Search failed:', error);
+      setResults([]);
     } finally {
       setIsSearching(false);
     }
@@ -99,9 +102,9 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
 
           {query && !isSearching && results.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
-              <p className="text-sm">Search feature coming in Phase 5.2</p>
+              <p className="text-sm">No results found</p>
               <p className="text-xs mt-2 opacity-60">
-                Full-text search across all conversations will be available soon
+                Try different keywords or check spelling
               </p>
             </div>
           )}
