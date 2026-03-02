@@ -8,6 +8,7 @@ import { AgentSelector } from '@/components/command-center/agent-selector';
 import { ChatInterface } from '@/components/command-center/chat-interface';
 import { ConversationTabs } from '@/components/command-center/conversation-tabs';
 import { DelegationCard } from '@/components/command-center/delegation-card';
+import { ActivitySidebar } from '@/components/command-center/activity-sidebar';
 import { useSendMessage } from '@/hooks/use-command-center-stream';
 import { useDelegation, Delegation } from '@/hooks/use-delegation';
 import { useApiKeyStatus } from '@/hooks/use-api-key';
@@ -268,8 +269,10 @@ export default function CommandCenterPage() {
           error={streamError}
         />
 
-        {/* Right Sidebar - Hidden for now (Phase 3) */}
-        {/* TODO: Show cost breakdown when totalCost is available */}
+        {/* Right Sidebar - Live Activity */}
+        <div className="w-80 border-l bg-background flex-shrink-0">
+          <ActivitySidebar />
+        </div>
       </div>
     </div>
   );
