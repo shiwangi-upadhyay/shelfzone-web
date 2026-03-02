@@ -208,7 +208,7 @@ export function AgentSelector({
                       <button
                         onClick={() => onSelectAgent(share.agent.id)}
                         className={cn(
-                          'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-all',
+                          'flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition-all',
                           isSelected
                             ? 'bg-purple-600/10 shadow-sm ring-1 ring-purple-600/20'
                             : 'hover:bg-accent/50'
@@ -216,15 +216,15 @@ export function AgentSelector({
                       >
                         {/* Avatar */}
                         <div className={cn(
-                          'flex h-10 w-10 items-center justify-center rounded-full text-lg shrink-0 relative',
+                          'flex h-8 w-8 items-center justify-center rounded-full text-sm shrink-0 relative',
                           isSelected 
                             ? 'bg-purple-600/20' 
                             : 'bg-muted'
                         )}>
                           🤖
                           {/* Shared indicator */}
-                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
-                            <Users className="h-2.5 w-2.5 text-white" />
+                          <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-purple-500 rounded-full flex items-center justify-center">
+                            <Users className="h-2 w-2 text-white" />
                           </div>
                         </div>
                         
@@ -247,22 +247,17 @@ export function AgentSelector({
                               </span>
                             )}
                           </div>
-                          <p className="text-[10px] text-purple-600 dark:text-purple-400 truncate mt-0.5">
+                          <p className="text-[9px] text-purple-600 dark:text-purple-400 truncate">
                             Shared by {ownerName}
                           </p>
-                          {share.agent.model && (
-                            <p className="text-[11px] text-muted-foreground font-mono truncate mt-0.5">
-                              {share.agent.model}
-                            </p>
-                          )}
                           
                           {/* Cost usage bar (if limit exists) */}
                           {share.costLimit && (
-                            <div className="mt-2">
-                              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                            <div className="mt-1">
+                              <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
                                 <div
                                   className={cn(
-                                    'h-full transition-all',
+                                    'h-1 transition-all',
                                     (Number(share.costUsed) / Number(share.costLimit)) * 100 < 75 && 'bg-emerald-500',
                                     (Number(share.costUsed) / Number(share.costLimit)) * 100 >= 75 && (Number(share.costUsed) / Number(share.costLimit)) * 100 < 90 && 'bg-amber-500',
                                     (Number(share.costUsed) / Number(share.costLimit)) * 100 >= 90 && 'bg-red-500'
@@ -270,7 +265,7 @@ export function AgentSelector({
                                   style={{ width: `${Math.min((Number(share.costUsed) / Number(share.costLimit)) * 100, 100)}%` }}
                                 />
                               </div>
-                              <p className="text-[9px] text-muted-foreground mt-0.5">
+                              <p className="text-[8px] text-muted-foreground mt-0.5">
                                 ${Number(share.costUsed).toFixed(4)} / ${Number(share.costLimit).toFixed(2)} spent
                               </p>
                             </div>

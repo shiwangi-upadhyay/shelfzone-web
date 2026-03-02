@@ -36,3 +36,14 @@
 ✓ Compiled in 68ms
  GET /dashboard/agents/command 200 in 844ms (compile: 95ms, proxy.ts: 4ms, render: 745ms)
 ✓ Compiled in 81ms
+ GET /dashboard/agents/command 200 in 836ms (compile: 96ms, proxy.ts: 4ms, render: 736ms)
+ GET /dashboard/agent-trace 200 in 88ms (compile: 55ms, proxy.ts: 4ms, render: 29ms)
+ GET /dashboard/agents 200 in 34ms (compile: 4ms, proxy.ts: 3ms, render: 26ms)
+ GET /dashboard/agents/command 200 in 30ms (compile: 4ms, proxy.ts: 4ms, render: 21ms)
+ GET /dashboard/agents/command 200 in 121ms (compile: 4ms, proxy.ts: 5ms, render: 112ms)
+ GET /dashboard/agents/command 200 in 103ms (compile: 3ms, proxy.ts: 4ms, render: 95ms)
+✓ Compiled in 78ms
+✓ Compiled in 158ms
+✓ Compiled in 68ms
+✓ Compiled in 56ms
+✓ Compiled in 160ms
