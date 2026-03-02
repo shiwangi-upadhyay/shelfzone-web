@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import Link from 'next/link';
@@ -29,11 +29,14 @@ import {
   Settings,
   DollarSign,
   Clock,
+  Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { CardGridSkeleton } from '@/components/ui/card-grid-skeleton';
 import { ErrorState } from '@/components/ui/error-state';
+import { ShareAgentDialog } from '@/components/agent-sharing/share-agent-dialog';
+import { AgentSharesList } from '@/components/agent-sharing/agent-shares-list';
 
 interface AgentDetail {
   id: string;
@@ -94,6 +97,7 @@ interface ConfigLog {
 export default function AgentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const queryClient = useQueryClient();
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const { data: agentData, isLoading, error, refetch } = useQuery({
     queryKey: ['agent', id],
@@ -200,6 +204,14 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setShareDialogOpen(true)}
+          >
+            <Users className="mr-2 h-4 w-4" />
+            Share
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => healthCheckMutation.mutate()}
             disabled={healthCheckMutation.isPending}
           >
@@ -287,6 +299,10 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           <TabsTrigger value="sessions">Sessions ({sessions.length})</TabsTrigger>
           <TabsTrigger value="api-keys">API Keys ({apiKeys.length})</TabsTrigger>
           <TabsTrigger value="config-history">Config History ({configLogs.length})</TabsTrigger>
+          <TabsTrigger value="sharing">
+            <Users className="mr-2 h-4 w-4" />
+            Sharing
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="sessions">
@@ -417,7 +433,19 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="sharing">
+          <AgentSharesList agentId={id} />
+        </TabsContent>
       </Tabs>
+
+      {/* Share Agent Dialog */}
+      <ShareAgentDialog
+        agentId={id}
+        agentName={agent.name}
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+      />
     </div>
   );
 }

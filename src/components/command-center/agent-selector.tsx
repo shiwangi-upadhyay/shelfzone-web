@@ -3,9 +3,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { Bot } from 'lucide-react';
+import { Bot, Users } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useActiveTabContexts } from '@/hooks/use-agent-contexts';
+import { useSharedAgents } from '@/hooks/use-shared-agents';
 import {
   Tooltip,
   TooltipContent,
@@ -46,8 +47,10 @@ export function AgentSelector({
   });
 
   const { data: contexts } = useActiveTabContexts();
+  const { data: sharedAgentsData, isLoading: sharedLoading } = useSharedAgents();
 
   const agents = data ?? [];
+  const sharedAgents = sharedAgentsData?.data ?? [];
 
   // Helper to get context for an agent
   const getAgentContext = (agentId: string) => {
@@ -64,7 +67,13 @@ export function AgentSelector({
 
       {/* Agent List */}
       <ScrollArea className="flex-1">
+        {/* My Agents Section */}
         <div className="p-2 space-y-1">
+          <div className="px-2 py-1.5">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              My Agents
+            </h3>
+          </div>
           {isLoading &&
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="h-16 animate-pulse rounded-lg bg-muted/50" />
@@ -170,6 +179,122 @@ export function AgentSelector({
             </div>
           )}
         </div>
+
+        {/* Shared With Me Section */}
+        {sharedAgents.length > 0 && (
+          <div className="p-2 space-y-1 mt-4 border-t pt-4">
+            <div className="px-2 py-1.5 flex items-center gap-2">
+              <Users className="h-3 w-3 text-muted-foreground" />
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Shared With Me
+              </h3>
+            </div>
+            
+            {sharedAgents.map((share) => {
+              const isSelected = selectedAgentId === share.agent.id;
+              const ownerName = share.owner.employee 
+                ? `${share.owner.employee.firstName} ${share.owner.employee.lastName}`
+                : share.owner.email;
+              const department = share.owner.employee?.department?.name || '';
+              
+              return (
+                <TooltipProvider key={share.id}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => onSelectAgent(share.agent.id)}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-all',
+                          isSelected
+                            ? 'bg-purple-600/10 shadow-sm ring-1 ring-purple-600/20'
+                            : 'hover:bg-accent/50'
+                        )}
+                      >
+                        {/* Avatar */}
+                        <div className={cn(
+                          'flex h-10 w-10 items-center justify-center rounded-full text-lg shrink-0 relative',
+                          isSelected 
+                            ? 'bg-purple-600/20' 
+                            : 'bg-muted'
+                        )}>
+                          🤖
+                          {/* Shared indicator */}
+                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
+                            <Users className="h-2.5 w-2.5 text-white" />
+                          </div>
+                        </div>
+                        
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className={cn(
+                              'font-medium truncate text-sm',
+                              isSelected ? 'text-purple-600 dark:text-purple-400' : 'text-foreground'
+                            )}>
+                              {share.agent.name}
+                            </span>
+                            {share.permission === 'control' ? (
+                              <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">
+                                control
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-900/40 text-gray-700 dark:text-gray-300">
+                                view
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-purple-600 dark:text-purple-400 truncate mt-0.5">
+                            Shared by {ownerName}
+                          </p>
+                          {share.agent.model && (
+                            <p className="text-[11px] text-muted-foreground font-mono truncate mt-0.5">
+                              {share.agent.model}
+                            </p>
+                          )}
+                          
+                          {/* Cost usage bar (if limit exists) */}
+                          {share.costLimit && (
+                            <div className="mt-2">
+                              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className={cn(
+                                    'h-full transition-all',
+                                    (share.costUsed / share.costLimit) * 100 < 75 && 'bg-emerald-500',
+                                    (share.costUsed / share.costLimit) * 100 >= 75 && (share.costUsed / share.costLimit) * 100 < 90 && 'bg-amber-500',
+                                    (share.costUsed / share.costLimit) * 100 >= 90 && 'bg-red-500'
+                                  )}
+                                  style={{ width: `${Math.min((share.costUsed / share.costLimit) * 100, 100)}%` }}
+                                />
+                              </div>
+                              <p className="text-[9px] text-muted-foreground mt-0.5">
+                                ${share.costUsed.toFixed(4)} / ${share.costLimit.toFixed(2)} spent
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <p className="font-semibold">{share.agent.name}</p>
+                      <p className="text-xs mt-1">Shared by {ownerName}</p>
+                      {department && (
+                        <p className="text-xs text-muted-foreground">{department}</p>
+                      )}
+                      <p className="text-xs mt-1">
+                        Permission: <span className="font-medium">{share.permission}</span>
+                      </p>
+                      {share.costLimit && (
+                        <p className="text-xs mt-1">
+                          Budget: ${share.costUsed.toFixed(4)} / ${share.costLimit.toFixed(2)}
+                        </p>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              );
+            })}
+          </div>
+        )}
       </ScrollArea>
     </div>
   );
