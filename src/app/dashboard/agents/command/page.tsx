@@ -9,6 +9,7 @@ import { ChatInterface } from '@/components/command-center/chat-interface';
 import { ConversationTabs } from '@/components/command-center/conversation-tabs';
 import { DelegationCard } from '@/components/command-center/delegation-card';
 import { ActivitySidebar } from '@/components/command-center/activity-sidebar';
+import { CostBreakdown } from '@/components/command-center/cost-breakdown';
 import { useSendMessage } from '@/hooks/use-command-center-stream';
 import { useDelegation, Delegation } from '@/hooks/use-delegation';
 import { useApiKeyStatus } from '@/hooks/use-api-key';
@@ -269,9 +270,14 @@ export default function CommandCenterPage() {
           error={streamError}
         />
 
-        {/* Right Sidebar - Live Activity */}
-        <div className="w-80 border-l bg-background flex-shrink-0">
-          <ActivitySidebar />
+        {/* Right Sidebar - Activity + Cost */}
+        <div className="w-80 border-l bg-background flex-shrink-0 flex flex-col">
+          <div className="flex-1 min-h-0">
+            <ActivitySidebar />
+          </div>
+          <div className="flex-1 min-h-0 border-t">
+            <CostBreakdown />
+          </div>
         </div>
       </div>
     </div>
