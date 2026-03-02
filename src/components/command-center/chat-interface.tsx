@@ -9,10 +9,18 @@ import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { MarkdownRenderer } from './markdown-renderer';
 import { CostDisplay, ConversationCostData } from './cost-display';
+import { DelegationCard } from './delegation-card';
+import { Delegation } from '@/hooks/use-delegation';
 
 interface ChatInterfaceProps {
   selectedAgentId: string | null;
-  messages: Array<{ id: string; role: 'user' | 'assistant'; content: string; timestamp: string }>;
+  messages: Array<{ 
+    id: string; 
+    role: 'user' | 'assistant'; 
+    content: string; 
+    timestamp: string;
+    delegations?: Delegation[];
+  }>;
   isStreaming: boolean;
   streamingContent: string;
   totalCost: any;
@@ -196,13 +204,25 @@ export function ChatInterface({
             msg.role === 'user' ? (
               <UserMessage key={msg.id} content={msg.content} timestamp={msg.timestamp} />
             ) : (
-              <AgentMessage 
-                key={msg.id} 
-                content={msg.content} 
-                timestamp={msg.timestamp}
-                agentName={agentName}
-                agentEmoji={agentEmoji}
-              />
+              <div key={msg.id}>
+                {/* Show delegation cards if this message has delegations */}
+                {msg.delegations && msg.delegations.map((delegation, idx) => (
+                  <DelegationCard
+                    key={`${msg.id}-delegation-${idx}`}
+                    agentName={delegation.agentName}
+                    instruction={delegation.instruction}
+                    reason={delegation.reason}
+                    status="complete"
+                  />
+                ))}
+                {/* Then show the assistant's final message */}
+                <AgentMessage 
+                  content={msg.content} 
+                  timestamp={msg.timestamp}
+                  agentName={agentName}
+                  agentEmoji={agentEmoji}
+                />
+              </div>
             )
           )}
 

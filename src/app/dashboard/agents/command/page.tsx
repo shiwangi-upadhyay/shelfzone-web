@@ -7,10 +7,14 @@ import { Button } from '@/components/ui/button';
 import { AgentSelector } from '@/components/command-center/agent-selector';
 import { ChatInterface } from '@/components/command-center/chat-interface';
 import { ConversationTabs } from '@/components/command-center/conversation-tabs';
+import { DelegationCard } from '@/components/command-center/delegation-card';
 import { useSendMessage } from '@/hooks/use-command-center-stream';
+import { useDelegation, Delegation } from '@/hooks/use-delegation';
 import { useApiKeyStatus } from '@/hooks/use-api-key';
 import { useAgentConversation } from '@/hooks/use-conversations';
 import { useActiveTab } from '@/hooks/use-conversation-tabs';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 import { ErrorState } from '@/components/ui/error-state';
 
 interface Message {
@@ -18,16 +22,19 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  delegations?: Delegation[];
 }
 
 export default function CommandCenterPage() {
   const router = useRouter();
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [selectedAgentName, setSelectedAgentName] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [currentTabId, setCurrentTabId] = useState<string | null>(null);
   
   const { data: keyStatus, isLoading: keyLoading, error: keyError, refetch: refetchKey } = useApiKeyStatus();
+  const { sendWithDelegation, isLoading: isDelegating } = useDelegation();
   
   // Get active tab
   const { data: activeTab } = useActiveTab();
@@ -59,6 +66,24 @@ export default function CommandCenterPage() {
   } = useSendMessage(selectedAgentId, conversationId);
 
   const hasValidKey = keyStatus?.hasKey && keyStatus?.isValid;
+
+  // Fetch selected agent details to check if it's SHIWANGI
+  const { data: agentDetails } = useQuery({
+    queryKey: ['agent-details', selectedAgentId],
+    queryFn: async () => {
+      if (!selectedAgentId) return null;
+      const response = await api.get<{ data: { name: string } }>(`/api/agent-portal/agents/${selectedAgentId}`);
+      return response.data;
+    },
+    enabled: !!selectedAgentId,
+  });
+
+  // Update selected agent name when agent details load
+  useEffect(() => {
+    if (agentDetails) {
+      setSelectedAgentName(agentDetails.name);
+    }
+  }, [agentDetails]);
 
   // Load conversation when agent changes
   useEffect(() => {
@@ -119,7 +144,7 @@ export default function CommandCenterPage() {
 
   const handleSend = useCallback(
     async (message: string) => {
-      if (!selectedAgentId || !hasValidKey || isStreaming) return;
+      if (!selectedAgentId || !hasValidKey || isStreaming || isDelegating) return;
 
       // Add user message to chat immediately
       const userMsg: Message = {
@@ -130,10 +155,32 @@ export default function CommandCenterPage() {
       };
       setMessages((prev) => [...prev, userMsg]);
 
-      // Send message
-      await sendMessage(message);
+      // Check if SHIWANGI is selected - use delegation endpoint
+      if (selectedAgentName === 'SHIWANGI') {
+        const result = await sendWithDelegation(selectedAgentId, conversationId, message);
+        
+        if (result) {
+          // Add assistant message with delegations
+          const assistantMsg: Message = {
+            id: Math.random().toString(36).slice(2) + Date.now().toString(36),
+            role: 'assistant',
+            content: result.message,
+            timestamp: new Date().toISOString(),
+            delegations: result.delegations,
+          };
+          setMessages((prev) => [...prev, assistantMsg]);
+
+          // Refetch conversation to get updated messages from DB
+          setTimeout(() => {
+            refetchConversation();
+          }, 500);
+        }
+      } else {
+        // Use regular streaming for other agents
+        await sendMessage(message);
+      }
     },
-    [selectedAgentId, hasValidKey, isStreaming, sendMessage]
+    [selectedAgentId, selectedAgentName, conversationId, hasValidKey, isStreaming, isDelegating, sendMessage, sendWithDelegation, refetchConversation]
   );
 
   // Loading state
