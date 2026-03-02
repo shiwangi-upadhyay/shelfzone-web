@@ -7,7 +7,7 @@ export function useSendMessage(agentId: string | null, conversationId: string | 
   const [error, setError] = useState<string | null>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
 
-  const sendMessage = useCallback(async (message: string) => {
+  const sendMessage = useCallback(async (message: string, attachments?: any[]) => {
     if (!agentId) return;
     
     setIsStreaming(true);
@@ -27,6 +27,12 @@ export function useSendMessage(agentId: string | null, conversationId: string | 
         throw new Error('Not authenticated');
       }
       
+      // Build request body
+      const body: any = { agentId, conversationId, message };
+      if (attachments && attachments.length > 0) {
+        body.attachments = attachments;
+      }
+      
       // Use fetch to initiate SSE connection
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/command-center/message`, {
         method: 'POST',
@@ -34,7 +40,7 @@ export function useSendMessage(agentId: string | null, conversationId: string | 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ agentId, conversationId, message }),
+        body: JSON.stringify(body),
         signal: controller.signal,
       });
 

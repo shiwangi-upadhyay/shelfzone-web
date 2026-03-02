@@ -178,7 +178,7 @@ export default function CommandCenterPage() {
   }, [isStreaming, stopGenerating]);
 
   const handleSend = useCallback(
-    async (message: string) => {
+    async (message: string, attachments?: any[]) => {
       if (!selectedAgentId || !hasValidKey || isStreaming || isDelegating) return;
 
       // Add user message to chat immediately
@@ -211,8 +211,8 @@ export default function CommandCenterPage() {
           }, 500);
         }
       } else {
-        // Use regular streaming for other agents
-        await sendMessage(message);
+        // Use regular streaming for other agents (with optional attachments)
+        await sendMessage(message, attachments);
       }
     },
     [selectedAgentId, selectedAgentName, conversationId, hasValidKey, isStreaming, isDelegating, sendMessage, sendWithDelegation, refetchConversation]

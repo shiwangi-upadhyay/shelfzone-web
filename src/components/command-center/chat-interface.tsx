@@ -11,6 +11,18 @@ import { MarkdownRenderer } from './markdown-renderer';
 import { CostDisplay, ConversationCostData } from './cost-display';
 import { DelegationCard } from './delegation-card';
 import { Delegation } from '@/hooks/use-delegation';
+import { FileUpload } from './file-upload';
+
+interface FileAttachment {
+  type: 'image' | 'text';
+  content: string;
+  metadata: {
+    filename: string;
+    mimeType: string;
+    size: number;
+    uploadedAt: string;
+  };
+}
 
 interface ChatInterfaceProps {
   selectedAgentId: string | null;
@@ -24,7 +36,7 @@ interface ChatInterfaceProps {
   isStreaming: boolean;
   streamingContent: string;
   totalCost: any;
-  onSend: (message: string) => void;
+  onSend: (message: string, attachments?: FileAttachment[]) => void;
   onStopGenerating: () => void;
   disabled?: boolean;
   error?: string | null;
@@ -126,6 +138,7 @@ export function ChatInterface({
   error,
 }: ChatInterfaceProps) {
   const [input, setInput] = useState('');
+  const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Fetch selected agent info
@@ -156,8 +169,9 @@ export function ChatInterface({
     e.preventDefault();
     const text = input.trim();
     if (!text || isStreaming || disabled) return;
-    onSend(text);
+    onSend(text, attachments.length > 0 ? attachments : undefined);
     setInput('');
+    setAttachments([]);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -274,28 +288,42 @@ export function ChatInterface({
           </div>
         )}
         <form onSubmit={handleSubmit} className="p-4">
-          <div className="mx-auto flex max-w-3xl gap-2">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your message..."
-              className="min-h-[56px] max-h-40 resize-none text-[15px] shadow-sm"
+          <div className="mx-auto max-w-3xl space-y-3">
+            {/* File Upload */}
+            <FileUpload
+              onFilesUploaded={(files) => setAttachments([...attachments, ...files])}
+              attachments={attachments}
+              onRemoveAttachment={(index) => {
+                setAttachments(attachments.filter((_, i) => i !== index));
+              }}
               disabled={disabled || isStreaming}
-              rows={1}
             />
-            <Button
-              type="submit"
-              size="icon"
-              disabled={!input.trim() || disabled || isStreaming}
-              className="h-[56px] w-[56px] shrink-0 shadow-sm"
-            >
-              {isStreaming ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-            </Button>
+
+            {/* Message Input */}
+            <div className="flex gap-2">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type your message..."
+                className="min-h-[56px] max-h-40 resize-none text-[15px] shadow-sm"
+                disabled={disabled || isStreaming}
+                rows={1}
+              />
+              <Button
+                type="submit"
+                size="icon"
+                disabled={!input.trim() || disabled || isStreaming}
+                className="h-[56px] w-[56px] shrink-0 shadow-sm"
+              >
+                {isStreaming ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+              </Button>
+            </div>
+
+            <p className="text-[11px] text-muted-foreground text-center">
+              Press Enter to send • Shift+Enter for new line
+            </p>
           </div>
-          <p className="mx-auto max-w-3xl mt-2 text-[11px] text-muted-foreground text-center">
-            Press Enter to send • Shift+Enter for new line
-          </p>
         </form>
       </div>
     </div>
