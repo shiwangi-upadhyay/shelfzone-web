@@ -15,6 +15,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Redirect /agents/delegates (plural) to /agents/delegate (singular)
+  if (pathname === '/dashboard/agents/delegates') {
+    return NextResponse.redirect(new URL('/dashboard/agents/delegate', request.url));
+  }
+
   // For dashboard routes, we can't read localStorage from middleware,
   // but we can set security headers on all responses
   const response = NextResponse.next();
