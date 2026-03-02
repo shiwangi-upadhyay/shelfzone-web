@@ -24,28 +24,38 @@ export interface Conversation {
 }
 
 /**
- * Hook to fetch conversation for a specific agent
+ * Hook to fetch conversation for a specific agent in a specific tab
  * @param agentId - The agent ID to fetch conversation for
+ * @param tabId - The tab ID to fetch conversation for
  * @param options - Query options
  */
 export function useAgentConversation(
   agentId: string | null,
+  tabId: string | null | undefined,
   options?: { enabled?: boolean }
 ) {
   return useQuery({
-    queryKey: ['command-center-conversation', agentId],
+    queryKey: ['command-center-conversation', agentId, tabId],
     queryFn: async () => {
       if (!agentId) return null;
       
-      // Fetch conversation for this agent
-      const response = await api.get<{ data: Conversation | null }>(
-        `/api/command-center/conversations?agentId=${agentId}`
-      );
+      // Fetch conversation for this agent in this tab
+      const url = tabId
+        ? `/api/command-center/conversations?agentId=${agentId}&tabId=${tabId}`
+        : `/api/command-center/conversations?agentId=${agentId}`;
       
-      return response.data || null;
+      const response = await api.get<{ data: Conversation | null; messages: Message[] }>(url);
+      
+      if (!response.data) return null;
+      
+      // Combine conversation metadata with messages
+      return {
+        ...response.data,
+        messages: response.messages || [],
+      };
     },
     enabled: options?.enabled !== false && !!agentId,
-    staleTime: 0, // Always fetch fresh data when agent changes
+    staleTime: 0, // Always fetch fresh data when agent/tab changes
     refetchOnWindowFocus: false,
   });
 }

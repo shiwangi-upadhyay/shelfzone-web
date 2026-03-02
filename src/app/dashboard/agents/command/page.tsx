@@ -10,6 +10,7 @@ import { ConversationTabs } from '@/components/command-center/conversation-tabs'
 import { useSendMessage } from '@/hooks/use-command-center-stream';
 import { useApiKeyStatus } from '@/hooks/use-api-key';
 import { useAgentConversation } from '@/hooks/use-conversations';
+import { useActiveTab } from '@/hooks/use-conversation-tabs';
 import { ErrorState } from '@/components/ui/error-state';
 
 interface Message {
@@ -24,15 +25,29 @@ export default function CommandCenterPage() {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [currentTabId, setCurrentTabId] = useState<string | null>(null);
   
   const { data: keyStatus, isLoading: keyLoading, error: keyError, refetch: refetchKey } = useApiKeyStatus();
   
-  // Load conversation for selected agent
+  // Get active tab
+  const { data: activeTab } = useActiveTab();
+
+  // Update current tab when active tab changes
+  useEffect(() => {
+    if (activeTab?.id && activeTab.id !== currentTabId) {
+      setCurrentTabId(activeTab.id);
+      // Clear messages when switching tabs
+      setMessages([]);
+      setConversationId(null);
+    }
+  }, [activeTab?.id, currentTabId]);
+  
+  // Load conversation for selected agent in current tab
   const { 
     data: conversation, 
     isLoading: conversationLoading,
     refetch: refetchConversation 
-  } = useAgentConversation(selectedAgentId);
+  } = useAgentConversation(selectedAgentId, currentTabId);
   
   const { 
     sendMessage, 
@@ -160,10 +175,11 @@ export default function CommandCenterPage() {
       {/* Conversation Tabs */}
       <ConversationTabs 
         onTabChange={(tabId) => {
-          // Tab switching - will clear current chat and load new tab's conversations
+          // Tab switching - clear current chat and trigger reload
+          setCurrentTabId(tabId);
           setMessages([]);
           setConversationId(null);
-          // Note: Full tab-scoped conversation loading will be implemented in next iteration
+          refetchConversation();
         }}
       />
 
