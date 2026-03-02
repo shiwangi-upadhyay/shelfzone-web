@@ -9,6 +9,7 @@ import { useHolidays } from '@/hooks/use-holidays';
 import { useAttendance } from '@/hooks/use-attendance';
 import { useLeaveRequests } from '@/hooks/use-leave';
 import { cn } from '@/lib/utils';
+import { TeamCalendar } from '@/components/calendar/team-calendar';
 
 export default function CalendarPage() {
   const [selectedMonth, setSelectedMonth] = useState(new Date());
@@ -225,14 +226,10 @@ export default function CalendarPage() {
         </TabsContent>
 
         <TabsContent value="team" className="space-y-4">
-          <div className="rounded-lg border bg-card p-8 text-center">
-            <p className="text-muted-foreground">
-              Team calendar view coming soon...
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Will show team member availability for scheduling
-            </p>
-          </div>
+          <TeamCalendar 
+            selectedMonth={selectedMonth} 
+            holidays={holidayList} 
+          />
         </TabsContent>
       </Tabs>
     </div>
