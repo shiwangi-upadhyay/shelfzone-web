@@ -34,3 +34,5 @@
  GET /dashboard/agents/command 200 in 104ms (compile: 3ms, proxy.ts: 3ms, render: 98ms)
 ✓ Compiled in 98ms
 ✓ Compiled in 68ms
+ GET /dashboard/agents/command 200 in 844ms (compile: 95ms, proxy.ts: 4ms, render: 745ms)
+✓ Compiled in 81ms

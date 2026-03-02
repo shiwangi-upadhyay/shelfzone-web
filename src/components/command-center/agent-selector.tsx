@@ -49,8 +49,12 @@ export function AgentSelector({
   const { data: contexts } = useActiveTabContexts();
   const { data: sharedAgentsData, isLoading: sharedLoading } = useSharedAgents();
 
-  const agents = data ?? [];
+  const allAgents = data ?? [];
   const sharedAgents = sharedAgentsData?.data ?? [];
+
+  // Filter out shared agents from "My Agents" to avoid duplication
+  const sharedAgentIds = new Set(sharedAgents.map((s) => s.agent.id));
+  const agents = allAgents.filter((agent) => !sharedAgentIds.has(agent.id));
 
   // Helper to get context for an agent
   const getAgentContext = (agentId: string) => {
