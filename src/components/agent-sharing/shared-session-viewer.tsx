@@ -15,7 +15,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Eye, DollarSign, X, Loader2, Users, Activity } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BridgeSessionsPanel } from '@/components/command-center/bridge-sessions-panel';
+import { Eye, DollarSign, X, Loader2, Users, Activity, Server } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -144,18 +146,31 @@ export function SharedSessionViewer({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Eye className="h-5 w-5" />
-            Live Shared Sessions
+            Live Agent Activity
           </DialogTitle>
           <DialogDescription>
-            View real-time activity of users accessing your shared agent
+            View shared sessions and remote agent executions in real-time
           </DialogDescription>
         </DialogHeader>
 
-        {sharesLoading ? (
-          <div className="flex items-center justify-center flex-1">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : shares.length === 0 ? (
+        <Tabs defaultValue="shared" className="flex-1 flex flex-col min-h-0">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="shared" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Shared Sessions
+            </TabsTrigger>
+            <TabsTrigger value="bridge" className="flex items-center gap-2">
+              <Server className="h-4 w-4" />
+              Remote Executions
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="shared" className="flex-1 min-h-0 mt-4">
+            {sharesLoading ? (
+              <div className="flex items-center justify-center flex-1">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : shares.length === 0 ? (
           <div className="flex flex-col items-center justify-center flex-1 text-center">
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-sm text-muted-foreground">
@@ -336,7 +351,13 @@ export function SharedSessionViewer({
               )}
             </div>
           </div>
-        )}
+            )}
+          </TabsContent>
+
+          <TabsContent value="bridge" className="flex-1 min-h-0 mt-4">
+            <BridgeSessionsPanel agentId={agentId} />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

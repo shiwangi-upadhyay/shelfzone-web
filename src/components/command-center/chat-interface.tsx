@@ -2,9 +2,13 @@
 
 import { useRef, useEffect, useState, FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Send, Loader2, User } from 'lucide-react';
+import { Send, Loader2, User, Server } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FileChangesPanel } from './file-changes-panel';
+import { TerminalPanel } from './terminal-panel';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { MarkdownRenderer } from './markdown-renderer';
@@ -50,6 +54,12 @@ interface Agent {
   id: string;
   name: string;
   emoji?: string;
+  nodeId?: string | null;
+  node?: {
+    id: string;
+    name: string;
+    online: boolean;
+  } | null;
 }
 
 
@@ -145,6 +155,7 @@ export function ChatInterface({
   const [input, setInput] = useState('');
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const [promptDialogOpen, setPromptDialogOpen] = useState(false);
+  const [fileChangeCount, setFileChangeCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Fetch selected agent info
@@ -170,6 +181,26 @@ export function ChatInterface({
       }, 50);
     }
   }, [messages.length, isStreaming, streamingContent]);
+
+  // Track file changes count for badge
+  useEffect(() => {
+    if (!conversationId || !selectedAgent?.nodeId) return;
+
+    const eventSource = new EventSource(`/api/bridge/events?conversationId=${conversationId}`);
+
+    eventSource.addEventListener('file_change', () => {
+      setFileChangeCount((prev) => prev + 1);
+    });
+
+    eventSource.onerror = () => {
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+      setFileChangeCount(0);
+    };
+  }, [conversationId, selectedAgent?.nodeId]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -201,9 +232,25 @@ export function ChatInterface({
         </div>
       )}
       
-      {/* Message stream */}
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto">
-        <div className="mx-auto max-w-3xl space-y-6 p-6 pb-8">
+      {/* Tabs for Messages / File Changes / Terminal */}
+      {selectedAgent?.nodeId ? (
+        <Tabs defaultValue="messages" className="flex-1 min-h-0 flex flex-col">
+          <div className="border-b px-6">
+            <TabsList>
+              <TabsTrigger value="messages">Messages</TabsTrigger>
+              <TabsTrigger value="files">
+                File Changes
+                {fileChangeCount > 0 && (
+                  <Badge className="ml-2 h-5 text-xs">{fileChangeCount}</Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="terminal">Terminal</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="messages" className="flex-1 min-h-0 m-0">
+            <div ref={scrollRef} className="h-full overflow-y-auto">
+              <div className="mx-auto max-w-3xl space-y-6 p-6 pb-8">
           {messages.length === 0 && !isStreaming && (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <div className="text-6xl mb-4">{selectedAgentId ? agentEmoji : '💬'}</div>
@@ -270,16 +317,109 @@ export function ChatInterface({
               </div>
             </div>
           )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="files" className="flex-1 min-h-0 m-0">
+            <div className="h-full overflow-y-auto">
+              <FileChangesPanel conversationId={conversationId || ''} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="terminal" className="flex-1 min-h-0 m-0 p-6">
+            <TerminalPanel conversationId={conversationId || ''} />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        /* Non-remote agent: show traditional message view */
+        <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto">
+          <div className="mx-auto max-w-3xl space-y-6 p-6 pb-8">
+            {messages.length === 0 && !isStreaming && (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <div className="text-6xl mb-4">{selectedAgentId ? agentEmoji : '💬'}</div>
+                <h3 className="text-xl font-semibold text-foreground">
+                  {selectedAgentId ? `Chat with ${agentName}` : 'Select an agent to start'}
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground max-w-md">
+                  {selectedAgentId 
+                    ? 'Send a message to begin your conversation'
+                    : 'Choose an agent from the sidebar to start chatting'
+                  }
+                </p>
+              </div>
+            )}
+            
+            {messages.map((msg) =>
+              msg.role === 'user' ? (
+                <UserMessage key={msg.id} content={msg.content} timestamp={msg.timestamp} />
+              ) : (
+                <div key={msg.id}>
+                  {msg.delegations && msg.delegations.map((delegation, idx) => (
+                    <DelegationCard
+                      key={`${msg.id}-delegation-${idx}`}
+                      agentName={delegation.agentName}
+                      instruction={delegation.instruction}
+                      reason={delegation.reason}
+                      status="complete"
+                    />
+                  ))}
+                  <AgentMessage 
+                    content={msg.content} 
+                    timestamp={msg.timestamp}
+                    agentName={agentName}
+                    agentEmoji={agentEmoji}
+                  />
+                </div>
+              )
+            )}
+
+            {isStreaming && streamingContent && (
+              <AgentMessage
+                content={streamingContent}
+                timestamp={new Date().toISOString()}
+                agentName={agentName}
+                agentEmoji={agentEmoji}
+                isStreaming={true}
+              />
+            )}
+
+            {isStreaming && !streamingContent && (
+              <ThinkingIndicator agentName={agentName} agentEmoji={agentEmoji} />
+            )}
+
+            {error && (
+              <div className="flex justify-center">
+                <div className="max-w-md rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+                  {error}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Input area */}
       <div className="flex-shrink-0 border-t bg-card/50">
         {selectedAgentId && (
           <div className="mx-auto max-w-3xl px-6 pt-2 flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">
-              Talking to: <span className="font-semibold text-foreground">{agentName}</span>
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-xs text-muted-foreground">
+                Talking to: <span className="font-semibold text-foreground">{agentName}</span>
+              </p>
+              {selectedAgent?.nodeId && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Server className="w-3 h-3" />
+                  <span>Running on {selectedAgent.node?.name || 'remote machine'}</span>
+                  <Badge 
+                    variant={selectedAgent.node?.online ? 'default' : 'secondary'}
+                    className="h-5 text-[10px]"
+                  >
+                    {selectedAgent.node?.online ? 'ONLINE' : 'OFFLINE'}
+                  </Badge>
+                </div>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { Bot, Users, MoreVertical, Share2, Eye } from 'lucide-react';
+import { Bot, Users, MoreVertical, Share2, Eye, Server } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useActiveTabContexts } from '@/hooks/use-agent-contexts';
 import { useSharedAgents } from '@/hooks/use-shared-agents';
@@ -32,6 +32,12 @@ interface Agent {
   model?: string;
   status: 'active' | 'idle' | 'error';
   isMaster?: boolean;
+  nodeId?: string | null;
+  node?: {
+    id: string;
+    name: string;
+    online: boolean;
+  } | null;
 }
 
 interface AgentSelectorProps {
@@ -151,6 +157,12 @@ export function AgentSelector({
                             {agent.isMaster && (
                               <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
                                 master
+                              </span>
+                            )}
+                            {agent.nodeId && (
+                              <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex items-center gap-1">
+                                <Server className="w-2.5 h-2.5" />
+                                remote
                               </span>
                             )}
                           </div>
