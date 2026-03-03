@@ -1,9 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { Bot, Users } from 'lucide-react';
+import { Bot, Users, MoreVertical, Share2, Eye } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useActiveTabContexts } from '@/hooks/use-agent-contexts';
 import { useSharedAgents } from '@/hooks/use-shared-agents';
@@ -13,6 +14,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { ShareAgentDialog } from '@/components/agent-sharing/share-agent-dialog';
+import { AgentSharesList } from '@/components/agent-sharing/agent-shares-list';
+import { SharedSessionViewer } from '@/components/agent-sharing/shared-session-viewer';
 
 interface Agent {
   id: string;
@@ -38,6 +49,11 @@ export function AgentSelector({
   selectedAgentId, 
   onSelectAgent
 }: AgentSelectorProps) {
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareDialogAgentId, setShareDialogAgentId] = useState<string>('');
+  const [shareDialogAgentName, setShareDialogAgentName] = useState<string>('');
+  const [viewLiveAgentId, setViewLiveAgentId] = useState<string | null>(null);
+
   const { data, isLoading } = useQuery({
     queryKey: ['agents'],
     queryFn: async () => {
@@ -59,6 +75,18 @@ export function AgentSelector({
   // Helper to get context for an agent
   const getAgentContext = (agentId: string) => {
     return contexts?.find((ctx: any) => ctx.agentId === agentId);
+  };
+
+  const handleShareClick = (agentId: string, agentName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShareDialogAgentId(agentId);
+    setShareDialogAgentName(agentName);
+    setShareDialogOpen(true);
+  };
+
+  const handleViewLiveClick = (agentId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setViewLiveAgentId(agentId);
   };
 
   return (
@@ -88,92 +116,120 @@ export function AgentSelector({
             const context = getAgentContext(agent.id);
             
             return (
-              <TooltipProvider key={agent.id}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => onSelectAgent(agent.id)}
-                      className={cn(
-                        'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-all',
-                        isSelected
-                          ? 'bg-indigo-600/10 shadow-sm ring-1 ring-indigo-600/20'
-                          : 'hover:bg-accent/50'
-                      )}
-                    >
-                      {/* Avatar */}
-                      <div className={cn(
-                        'flex h-10 w-10 items-center justify-center rounded-full text-lg shrink-0',
-                        isSelected 
-                          ? 'bg-indigo-600/20' 
-                          : 'bg-muted'
-                      )}>
-                        {agent.emoji || '🤖'}
-                      </div>
-                      
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className={cn(
-                            'font-medium truncate text-sm',
-                            isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-foreground'
-                          )}>
-                            {agent.name}
-                          </span>
-                          {agent.isMaster && (
-                            <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
-                              master
+              <div key={agent.id} className="relative group">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => onSelectAgent(agent.id)}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-all',
+                          isSelected
+                            ? 'bg-indigo-600/10 shadow-sm ring-1 ring-indigo-600/20'
+                            : 'hover:bg-accent/50'
+                        )}
+                      >
+                        {/* Avatar */}
+                        <div className={cn(
+                          'flex h-10 w-10 items-center justify-center rounded-full text-lg shrink-0',
+                          isSelected 
+                            ? 'bg-indigo-600/20' 
+                            : 'bg-muted'
+                        )}>
+                          {agent.emoji || '🤖'}
+                        </div>
+                        
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className={cn(
+                              'font-medium truncate text-sm',
+                              isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-foreground'
+                            )}>
+                              {agent.name}
                             </span>
+                            {agent.isMaster && (
+                              <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
+                                master
+                              </span>
+                            )}
+                          </div>
+                          {agent.model && (
+                            <p className="text-[11px] text-muted-foreground font-mono truncate mt-0.5">
+                              {agent.model}
+                            </p>
+                          )}
+                          
+                          {/* Context Usage Bar */}
+                          {context && (
+                            <div className="mt-2">
+                              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className={cn(
+                                    'h-full transition-all',
+                                    context.usage.level === 'green' && 'bg-emerald-500',
+                                    context.usage.level === 'amber' && 'bg-amber-500',
+                                    context.usage.level === 'red' && 'bg-red-500'
+                                  )}
+                                  style={{ width: `${Math.min(context.usage.percentage, 100)}%` }}
+                                />
+                              </div>
+                              <p className="text-[9px] text-muted-foreground mt-0.5">
+                                {context.usage.percentage.toFixed(1)}% context used
+                              </p>
+                            </div>
                           )}
                         </div>
-                        {agent.model && (
-                          <p className="text-[11px] text-muted-foreground font-mono truncate mt-0.5">
-                            {agent.model}
-                          </p>
-                        )}
                         
-                        {/* Context Usage Bar */}
-                        {context && (
-                          <div className="mt-2">
-                            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                              <div
-                                className={cn(
-                                  'h-full transition-all',
-                                  context.usage.level === 'green' && 'bg-emerald-500',
-                                  context.usage.level === 'amber' && 'bg-amber-500',
-                                  context.usage.level === 'red' && 'bg-red-500'
-                                )}
-                                style={{ width: `${Math.min(context.usage.percentage, 100)}%` }}
-                              />
-                            </div>
-                            <p className="text-[9px] text-muted-foreground mt-0.5">
-                              {context.usage.percentage.toFixed(1)}% context used
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Status Dot */}
-                      <span
-                        className={cn(
-                          'h-2 w-2 shrink-0 rounded-full',
-                          statusColor[agent.status] || 'bg-gray-400'
-                        )}
-                      />
-                    </button>
-                  </TooltipTrigger>
-                  {context && (
-                    <TooltipContent side="right">
-                      <p className="font-semibold">{agent.name} Context Usage</p>
-                      <p className="text-xs mt-1">
-                        {context.tokensUsed.toLocaleString()} / {context.maxTokens.toLocaleString()} tokens
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {context.usage.percentage.toFixed(1)}% used
-                      </p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+                        {/* Status Dot */}
+                        <span
+                          className={cn(
+                            'h-2 w-2 shrink-0 rounded-full',
+                            statusColor[agent.status] || 'bg-gray-400'
+                          )}
+                        />
+                      </button>
+                    </TooltipTrigger>
+                    {context && (
+                      <TooltipContent side="right">
+                        <p className="font-semibold">{agent.name} Context Usage</p>
+                        <p className="text-xs mt-1">
+                          {context.tokensUsed.toLocaleString()} / {context.maxTokens.toLocaleString()} tokens
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {context.usage.percentage.toFixed(1)}% used
+                        </p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+
+                {/* Share Menu - shown on hover */}
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 rounded-md"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="h-3 w-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={(e) => handleShareClick(agent.id, agent.name, e)}>
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Share Agent
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => handleViewLiveClick(agent.id, e)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Live Sessions
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
             );
           })}
           
@@ -295,6 +351,23 @@ export function AgentSelector({
           </div>
         )}
       </ScrollArea>
+
+      {/* Share Agent Dialog */}
+      <ShareAgentDialog
+        agentId={shareDialogAgentId}
+        agentName={shareDialogAgentName}
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+      />
+
+      {/* Shared Session Viewer */}
+      {viewLiveAgentId && (
+        <SharedSessionViewer
+          agentId={viewLiveAgentId}
+          open={!!viewLiveAgentId}
+          onOpenChange={(open) => !open && setViewLiveAgentId(null)}
+        />
+      )}
     </div>
   );
 }

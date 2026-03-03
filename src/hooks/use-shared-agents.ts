@@ -31,6 +31,17 @@ export interface SharedAgent {
       };
     } | null;
   };
+  sharedWithUser: {
+    id: string;
+    email: string;
+    employee: {
+      firstName: string;
+      lastName: string;
+      department: {
+        name: string;
+      } | null;
+    } | null;
+  };
 }
 
 /**
