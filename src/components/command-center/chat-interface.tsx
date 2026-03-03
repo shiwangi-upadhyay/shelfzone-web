@@ -188,10 +188,10 @@ export function ChatInterface({
   };
 
   return (
-    <div className="flex flex-1 flex-col min-w-0 bg-background">
+    <div className="flex flex-1 flex-col min-w-0 min-h-0 bg-background">
       {/* Cost Display - Fixed at top */}
       {totalCost && (
-        <div className="border-b bg-card/50 px-6 py-2.5 flex items-center justify-between">
+        <div className="flex-shrink-0 border-b bg-card/50 px-6 py-2.5 flex items-center justify-between">
           <div className="text-xs text-muted-foreground">
             💬 Last Message Cost
           </div>
@@ -202,7 +202,7 @@ export function ChatInterface({
       )}
       
       {/* Message stream */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto">
         <div className="mx-auto max-w-3xl space-y-6 p-6 pb-8">
           {messages.length === 0 && !isStreaming && (
             <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -274,7 +274,7 @@ export function ChatInterface({
       </div>
 
       {/* Input area */}
-      <div className="border-t bg-card/50">
+      <div className="flex-shrink-0 border-t bg-card/50">
         {selectedAgentId && (
           <div className="mx-auto max-w-3xl px-6 pt-2 flex items-center justify-between">
             <p className="text-xs text-muted-foreground">

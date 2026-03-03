@@ -110,8 +110,8 @@ export function CostBreakdown() {
   }
 
   return (
-    <Card className="h-full flex flex-col">
-      <div className="p-4 border-b">
+    <Card className="h-full flex flex-col overflow-hidden">
+      <div className="flex-shrink-0 p-4 border-b">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
@@ -129,7 +129,7 @@ export function CostBreakdown() {
         )}
       </div>
 
-      <ScrollArea className="flex-1 p-2">
+      <ScrollArea className="flex-1 min-h-0 p-2">
         {!breakdown || breakdown.agents.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-6">
             <TrendingUp className="h-12 w-12 text-muted-foreground/50 mb-3" />

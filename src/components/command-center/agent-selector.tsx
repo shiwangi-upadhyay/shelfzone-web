@@ -62,15 +62,15 @@ export function AgentSelector({
   };
 
   return (
-    <div className="flex h-full w-[260px] flex-col border-r bg-card/50">
+    <div className="flex h-full w-[260px] flex-shrink-0 flex-col border-r bg-card/50">
       {/* Header */}
-      <div className="flex h-14 items-center border-b px-4">
+      <div className="flex h-14 flex-shrink-0 items-center border-b px-4">
         <Bot className="mr-2 h-4 w-4 text-muted-foreground" />
         <span className="text-sm font-semibold">Agents</span>
       </div>
 
       {/* Agent List */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         {/* My Agents Section */}
         <div className="p-2 space-y-1">
           <div className="px-2 py-1.5">

@@ -253,7 +253,7 @@ export default function CommandCenterPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-7rem)] rounded-xl border bg-background overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden rounded-xl border bg-background">
       {/* Conversation Tabs */}
       <ConversationTabs 
         onTabChange={(tabId) => {
@@ -265,7 +265,7 @@ export default function CommandCenterPage() {
         }}
       />
 
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
         {/* Error banner */}
         {streamError && (
           <div className="absolute top-0 inset-x-0 z-10 bg-red-50 dark:bg-red-950/40 border-b border-red-200 dark:border-red-800 px-4 py-2 text-sm text-red-700 dark:text-red-300 text-center">
@@ -305,11 +305,11 @@ export default function CommandCenterPage() {
         />
 
         {/* Right Sidebar - Activity + Cost */}
-        <div className="w-80 border-l bg-background flex-shrink-0 flex flex-col">
-          <div className="flex-1 min-h-0">
+        <div className="w-80 border-l bg-background flex-shrink-0 flex flex-col overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-hidden">
             <ActivitySidebar />
           </div>
-          <div className="flex-1 min-h-0 border-t">
+          <div className="flex-1 min-h-0 border-t overflow-hidden">
             <CostBreakdown />
           </div>
         </div>
