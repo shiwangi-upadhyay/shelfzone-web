@@ -473,7 +473,7 @@ export function ChatInterface({
                 type="submit"
                 size="icon"
                 disabled={!input.trim() || disabled || isStreaming}
-                className="h-[56px] w-[56px] shrink-0 shadow-sm bg-red-500 hover:bg-red-600"
+                className="h-[56px] w-[56px] shrink-0 shadow-sm bg-blue-500 hover:bg-blue-600"
               >
                 {isStreaming ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
               </Button>
